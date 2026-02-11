@@ -1,21 +1,27 @@
-import React, { useState, useEffect, createContext } from 'react';
-import { Routes, Route, Navigate, useNavigate, useLocation } from 'react-router-dom';
-import Header from './components/layout/Header';
-import Sidebar from './components/layout/Sidebar';
-import ProgressOverview from './components/dashboard/ProgressOverview';
-import ContinueLearning from './components/dashboard/ContinueLearning';
-import AnalyticsCharts from './components/analytics/AnalyticsCharts';
-import LessonPlayer from './components/learning/LessonPlayer';
-import QuizSystem from './components/learning/QuizSystem';
-import Profile from './components/profile/Profile';
-import AchievementGallery from './components/profile/AchievementGallery';
-import CourseGrid from './components/courses/CourseGrid';
-import HomePage from './components/home/HomePage';
-import SettingsPanel from './components/settings/SettingsPanel';
-import SignUpPage from './components/Auth/SignUpPage';
-import LoginPage from './components/Auth/LoginPage';
-import toast, { Toaster } from 'react-hot-toast';
-import { UserProvider, useUser } from './components/context/UserContext';
+import React, { useState, useEffect, createContext } from "react";
+import {
+  Routes,
+  Route,
+  Navigate,
+  useNavigate,
+  useLocation,
+} from "react-router-dom";
+import Header from "./components/layout/Header";
+import Sidebar from "./components/layout/Sidebar";
+import ProgressOverview from "./components/dashboard/ProgressOverview";
+import ContinueLearning from "./components/dashboard/ContinueLearning";
+import AnalyticsCharts from "./components/analytics/AnalyticsCharts";
+import LessonPlayer from "./components/learning/LessonPlayer";
+import QuizSystem from "./components/learning/QuizSystem";
+import Profile from "./components/profile/Profile";
+import AchievementGallery from "./components/profile/AchievementGallery";
+import CourseGrid from "./components/courses/CourseGrid";
+import HomePage from "./components/home/HomePage";
+import SettingsPanel from "./components/settings/SettingsPanel";
+import SignUpPage from "./components/Auth/SignUpPage";
+import LoginPage from "./components/Auth/LoginPage";
+import toast, { Toaster } from "react-hot-toast";
+import { UserProvider, useUser } from "./components/context/UserContext";
 
 // Dark mode context
 export const DarkModeContext = createContext({
@@ -24,40 +30,56 @@ export const DarkModeContext = createContext({
   toggleDarkMode: () => {},
 });
 
-function AppRoutes({ activeTab, setActiveTab, sidebarOpen, setSidebarOpen, selectedCourseId, setSelectedCourseId }) {
+function AppRoutes({
+  activeTab,
+  setActiveTab,
+  sidebarOpen,
+  setSidebarOpen,
+  selectedCourseId,
+  setSelectedCourseId,
+}) {
   const navigate = useNavigate();
   const { user, setUser } = useUser();
   const location = useLocation();
 
   // Animation wrapper for main dashboard area
   const AnimatedMain = ({ children }) => (
-    <div className="max-w-7xl mx-auto animate-fadeInUp">{children}</div>
+    <div className="w-full max-w-7xl mx-auto animate-fadeInUp">{children}</div>
   );
 
   const handleLearningTabClick = () => {
     if (selectedCourseId) {
-      setActiveTab('learning');
+      setActiveTab("learning");
     } else {
-      setActiveTab('courses');
-      toast.error("Please select a course to continue")
+      setActiveTab("courses");
+      toast.error("Please select a course to continue");
     }
   };
 
   const renderContent = () => {
     switch (activeTab) {
-      case 'dashboard':
+      case "dashboard":
         return (
           <AnimatedMain>
             <ProgressOverview />
             <ContinueLearning setActiveTab={setActiveTab} />
           </AnimatedMain>
         );
-      case 'learning':
+      case "learning":
         if (!selectedCourseId) {
           return (
             <AnimatedMain>
-              <div className="text-center text-lg py-10">
-                Please select a Course from <span className="underline cursor-pointer" onClick={() => setActiveTab('courses')}>My Courses</span> or type in the search bar.
+              <div className="text-center text-lg py-20 px-6">
+                <p className="text-muted-foreground">
+                  Please select a course from{" "}
+                  <span
+                    className="text-primary font-semibold underline cursor-pointer hover:text-primary-dark transition-colors"
+                    onClick={() => setActiveTab("courses")}
+                  >
+                    My Courses
+                  </span>{" "}
+                  or use the search bar.
+                </p>
               </div>
             </AnimatedMain>
           );
@@ -66,59 +88,88 @@ function AppRoutes({ activeTab, setActiveTab, sidebarOpen, setSidebarOpen, selec
           <AnimatedMain>
             <LessonPlayer selectedCourseId={selectedCourseId} />
             <QuizSystem selectedCourseId={selectedCourseId} />
-            <div className="mt-6 flex justify-center">
+            <div className="mt-8 flex justify-center pb-8">
               <button
-                className="flex flex-col sm:flex-row justify-center gap-2 sm:gap-4 bg-blue-600 hover:bg-blue-700 text-white focus:ring-blue-500 shadow-lg hover:shadow-xl px-6 py-3 rounded-lg transition-all duration-200"
-                onClick={() => setActiveTab('courses')}
+                className="btn-primary inline-flex items-center gap-2"
+                onClick={() => setActiveTab("courses")}
               >
+                <svg
+                  className="w-5 h-5"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M10 19l-7-7m0 0l7-7m-7 7h18"
+                  />
+                </svg>
                 Back to My Courses
               </button>
             </div>
           </AnimatedMain>
         );
-      case 'courses':
+      case "courses":
         return (
           <AnimatedMain>
             <CourseGrid
               setActiveTab={setActiveTab}
               onSelectCourse={(id) => {
                 setSelectedCourseId(id);
-                setActiveTab('learning');
+                setActiveTab("learning");
               }}
             />
           </AnimatedMain>
         );
-      case 'analytics':
-        return <AnimatedMain><AnalyticsCharts /></AnimatedMain>;
-      case 'achievements':
-        return <AnimatedMain><AchievementGallery /></AnimatedMain>;
-      case 'profile':
-        return <AnimatedMain><Profile /></AnimatedMain>;
-      case 'settings':
+      case "analytics":
+        return (
+          <AnimatedMain>
+            <AnalyticsCharts />
+          </AnimatedMain>
+        );
+      case "achievements":
+        return (
+          <AnimatedMain>
+            <AchievementGallery />
+          </AnimatedMain>
+        );
+      case "profile":
+        return (
+          <AnimatedMain>
+            <Profile />
+          </AnimatedMain>
+        );
+      case "settings":
         return (
           <AnimatedMain>
             <SettingsPanel />
           </AnimatedMain>
         );
       default:
-        return <AnimatedMain><ProgressOverview /></AnimatedMain>;
+        return (
+          <AnimatedMain>
+            <ProgressOverview />
+          </AnimatedMain>
+        );
     }
   };
 
   // ---- Auth Handlers (context driven) ----
   const handleLogin = (userObj) => {
     setUser(userObj);
-    navigate('/dashboard');
+    navigate("/dashboard");
   };
 
   const handleSignUp = (userObj) => {
     setUser(userObj);
-    navigate('/dashboard');
+    navigate("/dashboard");
   };
 
   const handleLogout = () => {
     setUser(null);
-    navigate('/');
+    navigate("/");
   };
 
   return (
@@ -141,7 +192,7 @@ function AppRoutes({ activeTab, setActiveTab, sidebarOpen, setSidebarOpen, selec
             isLoggedIn={!!user}
             onBack={() => navigate(-1)}
             onLogin={handleLogin}
-            onGoToSignUp={() => navigate('/signup')}
+            onGoToSignUp={() => navigate("/signup")}
           />
         }
       />
@@ -149,22 +200,24 @@ function AppRoutes({ activeTab, setActiveTab, sidebarOpen, setSidebarOpen, selec
         path="/dashboard/*"
         element={
           !!user ? (
-            <div className="min-h-screen bg-gradient-to-br from-blue-100 via-white to-purple-100 dark:from-gray-900 dark:via-gray-950 dark:to-gray-900 animate-fadeIn transition-colors">
-              <div className="flex">
+            <div className="min-h-screen bg-gradient-to-br from-secondary via-background to-muted dark:from-gray-900 dark:via-background dark:to-gray-950 transition-colors duration-300">
+              <div className="flex min-h-screen">
                 <Sidebar
                   activeTab={activeTab}
                   setActiveTab={setActiveTab}
                   isOpen={sidebarOpen}
                   onClose={() => setSidebarOpen(false)}
-                  onLearningTabClick={handleLearningTabClick} 
+                  onLearningTabClick={handleLearningTabClick}
                 />
-                <div className="flex-1">
-                  <Header 
-                    onMenuToggle={() => setSidebarOpen(!sidebarOpen)} 
+                <div className="flex-1 flex flex-col min-h-screen">
+                  <Header
+                    onMenuToggle={() => setSidebarOpen(!sidebarOpen)}
                     setActiveTab={setActiveTab}
                     setSelectedCourseId={setSelectedCourseId}
                   />
-                  <main className="p-4 lg:p-8 pt-[72px]">{renderContent()}</main>
+                  <main className="flex-1 w-full px-4 py-6 lg:px-8 lg:py-8 pt-20 lg:pt-24">
+                    {renderContent()}
+                  </main>
                 </div>
               </div>
             </div>
@@ -179,7 +232,7 @@ function AppRoutes({ activeTab, setActiveTab, sidebarOpen, setSidebarOpen, selec
 }
 
 function App() {
-  const [activeTab, setActiveTab] = useState('dashboard');
+  const [activeTab, setActiveTab] = useState("dashboard");
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [selectedCourseId, setSelectedCourseId] = useState(null);
 
@@ -193,13 +246,19 @@ function App() {
   const location = useLocation();
 
   useEffect(() => {
-    if (location.pathname.startsWith('/dashboard/profile')) setActiveTab('profile');
-    else if (location.pathname.startsWith('/dashboard/analytics')) setActiveTab('analytics');
-    else if (location.pathname.startsWith('/dashboard/courses')) setActiveTab('courses');
-    else if (location.pathname.startsWith('/dashboard/learning')) setActiveTab('learning');
-    else if (location.pathname.startsWith('/dashboard/achievements')) setActiveTab('achievements');
-    else if (location.pathname.startsWith('/dashboard/settings')) setActiveTab('settings');
-    else setActiveTab('dashboard');
+    if (location.pathname.startsWith("/dashboard/profile"))
+      setActiveTab("profile");
+    else if (location.pathname.startsWith("/dashboard/analytics"))
+      setActiveTab("analytics");
+    else if (location.pathname.startsWith("/dashboard/courses"))
+      setActiveTab("courses");
+    else if (location.pathname.startsWith("/dashboard/learning"))
+      setActiveTab("learning");
+    else if (location.pathname.startsWith("/dashboard/achievements"))
+      setActiveTab("achievements");
+    else if (location.pathname.startsWith("/dashboard/settings"))
+      setActiveTab("settings");
+    else setActiveTab("dashboard");
   }, [location.pathname]);
 
   useEffect(() => {
@@ -219,31 +278,52 @@ function App() {
       <Toaster
         position="top-right"
         toastOptions={{
-          className: 'rounded-2xl shadow-xl border border-white/30 dark:border-white/10 px-4 py-3 font-semibold text-base',
+          duration: 4000,
+          className: "rounded-xl shadow-xl",
           style: {
-            background: 'linear-gradient(90deg, #e0e7ff 0%, #fff1f2 100%)',
-            color: '#312e81',
-            boxShadow: '0 6px 32px 0 rgba(59, 130, 246, 0.13)',
-            borderRadius: '1rem',
+            background: "hsl(var(--card))",
+            color: "hsl(var(--card-foreground))",
+            border: "1px solid hsl(var(--border))",
+            padding: "16px",
+            fontSize: "0.95rem",
+            fontWeight: "500",
+            boxShadow: "var(--shadow-lg)",
           },
           success: {
+            duration: 3000,
             style: {
-              background: 'linear-gradient(90deg, #d1fae5 0%, #a7f3d0 100%)',
-              color: '#059669',
+              background: "hsl(var(--success))",
+              color: "hsl(var(--success-foreground))",
+              border: "none",
+              boxShadow: "var(--shadow-success-glow)",
             },
             iconTheme: {
-              primary: '#059669',
-              secondary: '#bbf7d0',
+              primary: "hsl(var(--success-foreground))",
+              secondary: "hsl(var(--success))",
             },
           },
           error: {
+            duration: 4000,
             style: {
-              background: 'linear-gradient(90deg, #fee2e2 0%, #fca5a5 100%)',
-              color: '#b91c1c',
+              background: "hsl(var(--destructive))",
+              color: "hsl(var(--destructive-foreground))",
+              border: "none",
+              boxShadow: "0 0 25px hsl(var(--destructive) / 0.3)",
             },
             iconTheme: {
-              primary: '#b91c1c',
-              secondary: '#fee2e2',
+              primary: "hsl(var(--destructive-foreground))",
+              secondary: "hsl(var(--destructive))",
+            },
+          },
+          loading: {
+            style: {
+              background: "hsl(var(--info))",
+              color: "hsl(var(--info-foreground))",
+              border: "none",
+            },
+            iconTheme: {
+              primary: "hsl(var(--info-foreground))",
+              secondary: "hsl(var(--info))",
             },
           },
         }}
