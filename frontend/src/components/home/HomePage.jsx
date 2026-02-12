@@ -560,32 +560,43 @@ const HomePage = () => {
         ref={headerRef}
         className="bg-card/95 shadow-sm sticky top-0 z-50 backdrop-blur-xl border-b border-border"
       >
-        <div className="w-full max-w-7xl mx-auto px-6 py-4">
-          <div className="flex justify-between items-center">
-            <div className="flex items-center space-x-4">
-              <div className="w-14 h-14 bg-gradient-hero rounded-2xl flex items-center justify-center shadow-md hover:shadow-lg transition-shadow duration-300">
-                <Sparkles className="text-white" size={24} />
+        <div className="w-full max-w-7xl mx-auto px-4 sm:px-6 py-3 sm:py-4">
+          <div className="flex justify-between items-center gap-3">
+            {/* Logo Section */}
+            <div className="flex items-center space-x-2 sm:space-x-4 flex-shrink-0">
+              <div className="w-10 h-10 sm:w-14 sm:h-14 bg-gradient-hero rounded-xl sm:rounded-2xl flex items-center justify-center shadow-md hover:shadow-lg transition-shadow duration-300">
+                <Sparkles className="text-white" size={18} />
               </div>
-              <div className="hidden md:block">
-                <span className="text-3xl font-black gradient-text">
+              <div className="block">
+                <span className="text-xl sm:text-3xl font-black gradient-text">
                   EduSmart
                 </span>
-                <p className="text-sm text-muted-foreground font-medium">
+                <p className="hidden md:block text-sm text-muted-foreground font-medium">
                   Transform Your Future
                 </p>
               </div>
             </div>
-            <div className="flex items-center space-x-8">
+
+            {/* Actions Section */}
+            <div className="flex items-center gap-2 sm:gap-4 md:gap-8">
+              {/* Dark Mode Toggle */}
               <button
                 onClick={toggleDarkMode}
-                className="p-3 rounded-xl bg-secondary text-secondary-foreground hover:bg-muted transition-all duration-300 hover:scale-105"
+                className="p-2 sm:p-3 rounded-lg sm:rounded-xl bg-secondary text-secondary-foreground hover:bg-muted transition-all duration-300 hover:scale-105 flex-shrink-0"
                 aria-label="Toggle dark mode"
               >
-                {darkMode ? <Sun size={20} /> : <Moon size={20} />}
+                {darkMode ? (
+                  <Sun size={18} className="sm:w-5 sm:h-5" />
+                ) : (
+                  <Moon size={18} className="sm:w-5 sm:h-5" />
+                )}
               </button>
+
+              {/* Login Button */}
               <Link to="/login">
-                <button className="px-6 py-3 bg-primary text-primary-foreground rounded-xl font-semibold shadow-sm hover:shadow-md transition-all duration-300 hover:scale-105">
-                  Login to Dashboard
+                <button className="px-3 py-2 sm:px-6 sm:py-3 bg-primary text-primary-foreground rounded-lg sm:rounded-xl text-sm sm:text-base font-semibold shadow-sm hover:shadow-md transition-all duration-300 hover:scale-105 whitespace-nowrap">
+                  <span className="hidden sm:inline">Login to Dashboard</span>
+                  <span className="sm:hidden">Login</span>
                 </button>
               </Link>
             </div>
@@ -595,7 +606,7 @@ const HomePage = () => {
 
       {/* HERO */}
       <section
-        className="relative min-h-[85vh] flex flex-col justify-center items-center overflow-hidden pt-8 pb-16"
+        className="relative min-h-screen flex flex-col justify-center items-center overflow-hidden py-20"
         style={{ background: "var(--section-hero)" }}
       >
         <div
@@ -621,62 +632,70 @@ const HomePage = () => {
           }}
         />
 
-        <div className="w-full max-w-7xl mx-auto px-6 z-10 relative">
+        <div className="w-full max-w-7xl mx-auto px-4 sm:px-6 z-10 relative flex flex-col items-center">
           <div
             ref={heroRef}
-            className="flex flex-col items-center text-center space-y-5"
+            className="flex flex-col items-center text-center space-y-8 mb-6"
           >
-            <h1 className="text-6xl md:text-7xl xl:text-8xl font-black text-foreground leading-tight">
+            {/* Title */}
+            <h1 className="text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-black text-foreground leading-tight px-4">
               Master Your <span className="gradient-text">Future</span>
               <br />
               <span className="text-primary">Today</span>
             </h1>
-            <p className="text-xl md:text-2xl text-muted-foreground max-w-4xl leading-relaxed font-medium">
+
+            {/* Description */}
+            <p className="text-base sm:text-lg md:text-xl text-muted-foreground max-w-3xl leading-relaxed font-medium px-4">
               From learners to leaders—reshaping how the world gains tech
               skills. Code, create, and launch projects that matter in today's
               tech landscape.
             </p>
-            <div className="flex flex-col sm:flex-row gap-4 pt-1">
-              <Link to="/signup">
-                <button className="text-xl px-9 py-5 bg-card text-foreground border-2 border-border rounded-2xl font-bold hover:border-primary hover:bg-card/80 transition-all duration-300 inline-flex items-center gap-3">
+
+            {/* Buttons */}
+            <div className="flex flex-col sm:flex-row gap-4 pt-2 w-full sm:w-auto px-4">
+              <Link to="/signup" className="w-full sm:w-auto">
+                <button className="w-full sm:w-auto text-base sm:text-lg px-8 sm:px-10 py-3 sm:py-4 bg-card text-foreground border-2 border-border rounded-2xl font-bold hover:border-primary hover:bg-card/80 transition-all duration-300 inline-flex items-center justify-center gap-3 hover:scale-105">
                   Start Learning Free
-                  <ArrowRight size={20} />
+                  <ArrowRight size={18} />
                 </button>
               </Link>
-              <Link to="/login">
-                <button className="text-xl px-12 py-5 bg-card text-foreground border-2 border-border rounded-2xl font-bold hover:border-primary hover:bg-card/80 transition-all duration-300 inline-flex items-center gap-3">
+              <Link to="/login" className="w-full sm:w-auto">
+                <button className="w-full sm:w-auto text-base sm:text-lg px-8 sm:px-10 py-3 sm:py-4 bg-card text-foreground border-2 border-border rounded-2xl font-bold hover:border-primary hover:bg-card/80 transition-all duration-300 inline-flex items-center justify-center gap-3 hover:scale-105">
                   Explore Courses
-                  <BookOpen size={20} />
+                  <BookOpen size={18} />
                 </button>
               </Link>
             </div>
+
+            {/* Arrow - positioned between buttons and cards */}
             <button
               onClick={scrollToFeatures}
-              className="hover:scale-110 transition-all duration-300 mt-4"
+              className="hover:scale-110 transition-all duration-300 mt-1"
               aria-label="Scroll to features"
             >
-              <ChevronDown className="text-primary w-12 h-12 drop-shadow-sm animate-bounce" />
+              <ChevronDown className="text-primary w-10 h-10 sm:w-12 sm:h-12 drop-shadow-sm animate-bounce" />
             </button>
           </div>
-        </div>
 
-        <div className="absolute bottom-12 left-1/2 transform -translate-x-1/2 z-[2] hidden lg:flex gap-6 opacity-95">
-          {highlights.map((highlight, index) => (
-            <div
-              key={index}
-              className="flex flex-col items-center text-center max-w-[200px] px-6 py-4 bg-card/95 backdrop-blur-xl rounded-2xl border border-border shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-105"
-            >
-              <div className="w-14 h-14 bg-gradient-to-br from-primary/10 to-accent/10 rounded-xl flex items-center justify-center mb-3 group-hover:scale-110 transition-transform">
-                <highlight.icon className="text-primary" size={28} />
+          {/* Highlight Cards - Equal sizes and pulled up */}
+          <div className="w-full flex flex-col sm:flex-row justify-center items-stretch gap-4 sm:gap-6 -mt-3 px-4">
+            {highlights.map((highlight, index) => (
+              <div
+                key={index}
+                className="flex flex-col items-center text-center flex-1 sm:max-w-[200px] px-5 py-4 bg-card/95 backdrop-blur-xl rounded-xl border border-border shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-105 min-h-[140px]"
+              >
+                <div className="w-12 h-12 bg-gradient-to-br from-primary/10 to-accent/10 rounded-lg flex items-center justify-center mb-2 flex-shrink-0">
+                  <highlight.icon className="text-primary" size={24} />
+                </div>
+                <h3 className="text-sm font-bold text-foreground mb-1">
+                  {highlight.title}
+                </h3>
+                <p className="text-xs text-muted-foreground leading-relaxed">
+                  {highlight.description}
+                </p>
               </div>
-              <h3 className="text-base font-bold text-foreground mb-1">
-                {highlight.title}
-              </h3>
-              <p className="text-xs text-muted-foreground leading-relaxed">
-                {highlight.description}
-              </p>
-            </div>
-          ))}
+            ))}
+          </div>
         </div>
       </section>
 
@@ -720,7 +739,7 @@ const HomePage = () => {
         </div>
       </section>
 
-      {/* SUBTLE GLOW SEPARATOR - Only visible in dark mode */}
+      {/* SUBTLE GLOW SEPARATOR */}
       <div className="section-glow-divider dark:block hidden" />
 
       {/* FEATURES */}
