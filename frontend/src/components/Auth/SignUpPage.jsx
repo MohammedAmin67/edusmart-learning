@@ -1,5 +1,11 @@
 import React, { useState, useContext } from "react";
-import { ChevronLeft, Sparkles, Moon, Sun, ArrowRight } from "lucide-react";
+import {
+  ChevronLeft,
+  GraduationCap,
+  Moon,
+  Sun,
+  ArrowRight,
+} from "lucide-react";
 import { motion } from "framer-motion";
 import Button from "../shared/Button";
 import toast from "react-hot-toast";
@@ -74,7 +80,7 @@ const SignUpPage = ({ isLoggedIn, onBack, onSignUp }) => {
               className="flex items-center space-x-2 sm:space-x-4 flex-shrink-0"
             >
               <div className="w-10 h-10 sm:w-14 sm:h-14 bg-gradient-hero rounded-xl sm:rounded-2xl flex items-center justify-center shadow-md">
-                <Sparkles className="text-white" size={18} />
+                <GraduationCap className="text-white" size={18} />
               </div>
               <div className="block">
                 <span className="text-xl sm:text-3xl font-black gradient-text">

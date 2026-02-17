@@ -1,4 +1,4 @@
-import React from 'react';
+import React from "react";
 import {
   Home,
   BookOpen,
@@ -8,75 +8,33 @@ import {
   Settings,
   PlayCircle,
   X,
-  Sparkles,
+  GraduationCap,
   Flame,
-  Star
-} from 'lucide-react';
-import { motion, AnimatePresence } from 'framer-motion';
-
-const AnimatedLogo = () => (
-  <motion.div
-    initial={{ scale: 0.8, rotate: -10, opacity: 0.4 }}
-    animate={{ scale: 1, rotate: 0, opacity: 1 }}
-    whileHover={{
-      scale: 1.12,
-      rotate: 7,
-      boxShadow: '0px 0px 28px 8px #6366f1',
-      transition: { type: 'spring', stiffness: 220 }
-    }}
-    transition={{ type: 'spring', stiffness: 220, damping: 14 }}
-    className="w-9 h-9 rounded-lg bg-gradient-to-br from-blue-600 via-blue-400 to-green-400 flex items-center justify-center shadow-xl"
-  >
-    <motion.span
-      className="block"
-      animate={{
-        scale: [1, 1.11, 1],
-        rotate: [0, 8, -8, 0],
-        filter: [
-          "drop-shadow(0 0 0px #6366f1)", "drop-shadow(0 0 9px #6366f1)", "drop-shadow(0 0 0px #6366f1)"
-        ]
-      }}
-      transition={{
-        repeat: Infinity,
-        duration: 3,
-        ease: "easeInOut"
-      }}
-    >
-      <svg width={24} height={24} fill="none" viewBox="0 0 24 24">
-        <path d="M3 6.75C3 5.23122 4.23122 4 5.75 4H18.25C19.7688 4 21 5.23122 21 6.75V17.25C21 18.7688 19.7688 20 18.25 20H5.75C4.23122 20 3 18.7688 3 17.25V6.75Z" fill="url(#a)" />
-        <path d="M7 8H17M7 12H13" stroke="#fff" strokeWidth="2" strokeLinecap="round" />
-        <defs>
-          <linearGradient id="a" x1="3" y1="4" x2="21" y2="20" gradientUnits="userSpaceOnUse">
-            <stop stopColor="#38bdf8" />
-            <stop offset="1" stopColor="#a78bfa" />
-          </linearGradient>
-        </defs>
-      </svg>
-    </motion.span>
-  </motion.div>
-);
+  Star,
+} from "lucide-react";
+import { motion, AnimatePresence } from "framer-motion";
 
 const menuVariants = {
-  hidden: { 
-    x: -320, 
+  hidden: {
+    x: -320,
     opacity: 0,
-    transition: { duration: 0.3, ease: "easeInOut" }
+    transition: { duration: 0.3, ease: "easeInOut" },
   },
-  visible: { 
-    x: 0, 
-    opacity: 1, 
-    transition: { 
-      type: 'spring', 
-      damping: 25, 
+  visible: {
+    x: 0,
+    opacity: 1,
+    transition: {
+      type: "spring",
+      damping: 25,
       stiffness: 200,
-      staggerChildren: 0.05
-    } 
+      staggerChildren: 0.05,
+    },
   },
-  exit: { 
-    x: -320, 
-    opacity: 0, 
-    transition: { duration: 0.25, ease: "easeInOut" } 
-  }
+  exit: {
+    x: -320,
+    opacity: 0,
+    transition: { duration: 0.25, ease: "easeInOut" },
+  },
 };
 
 const itemVariants = {
@@ -85,29 +43,27 @@ const itemVariants = {
     opacity: 1,
     x: 0,
     scale: 1,
-    transition: { 
-      delay: i * 0.05, 
+    transition: {
+      delay: i * 0.05,
       duration: 0.4,
-      ease: "easeOut"
-    }
+      ease: "easeOut",
+    },
   }),
 };
 
-// Enhanced streak widget with more animations
 const StreakWidget = () => (
   <motion.div
-    className="mx-4 mb-6 p-4 bg-gradient-to-br from-orange-400 via-red-500 to-pink-500 rounded-2xl shadow-lg relative overflow-hidden"
-    whileHover={{ scale: 1.02, y: -2 }}
+    className="mx-4 mb-4 p-4 rounded-xl bg-gradient-to-br from-accent/20 to-accent/10 border border-accent/30 relative overflow-hidden"
+    whileHover={{ scale: 1.02 }}
     transition={{ duration: 0.3 }}
   >
-    {/* Animated background elements */}
     <div className="absolute inset-0">
       {[...Array(6)].map((_, i) => (
         <motion.div
           key={i}
-          className="absolute w-2 h-2 bg-white/30 rounded-full"
+          className="absolute w-1.5 h-1.5 bg-accent/40 rounded-full"
           animate={{
-            y: [0, -20, 0],
+            y: [0, -15, 0],
             opacity: [0.3, 1, 0.3],
             scale: [1, 1.2, 1],
           }}
@@ -123,30 +79,32 @@ const StreakWidget = () => (
         />
       ))}
     </div>
-    
+
     <div className="relative z-10">
       <div className="flex items-center justify-between mb-2">
         <motion.div
           animate={{ rotate: [0, 10, -10, 0] }}
           transition={{ duration: 2, repeat: Infinity }}
         >
-          <Flame className="w-6 h-6 text-white" />
+          <Flame className="w-6 h-6 text-accent" />
         </motion.div>
         <motion.div
-          className="text-2xl font-bold text-white"
+          className="text-2xl font-bold text-foreground"
           animate={{ scale: [1, 1.1, 1] }}
           transition={{ duration: 1.5, repeat: Infinity }}
         >
           7
         </motion.div>
       </div>
-      <div className="text-white font-bold text-sm mb-1">Day Streak!</div>
-      <div className="text-orange-100 text-xs">Keep the momentum going!</div>
-      
+      <div className="text-foreground font-bold text-sm mb-1">Day Streak!</div>
+      <div className="text-muted-foreground text-xs">
+        Keep the momentum going!
+      </div>
+
       {/* Progress bar */}
-      <div className="mt-3 h-1.5 bg-white/20 rounded-full overflow-hidden">
+      <div className="mt-3 h-1.5 bg-muted rounded-full overflow-hidden">
         <motion.div
-          className="h-full bg-white rounded-full"
+          className="h-full bg-gradient-to-r from-accent to-accent/70 rounded-full"
           initial={{ width: "0%" }}
           animate={{ width: "85%" }}
           transition={{ duration: 1.5, delay: 0.5 }}
@@ -156,50 +114,15 @@ const StreakWidget = () => (
   </motion.div>
 );
 
-// Enhanced brand logo
-const BrandLogo = () => (
-  <motion.div
-    className="flex items-center space-x-3 px-4 py-6"
-    initial={{ opacity: 0, y: -20 }}
-    animate={{ opacity: 1, y: 0 }}
-    transition={{ duration: 0.5 }}
-  >
-    <motion.div
-      className="w-10 h-10 bg-gradient-to-br rounded-2xl flex items-center justify-center shadow-lg relative overflow-hidden"
-    >
-     
-      <AnimatedLogo />
-    </motion.div>
-    <motion.span
-      className="font-bold text-xl text-gray-800 dark:text-gray-100"
-      animate={{
-        backgroundImage: [
-          "linear-gradient(45deg, #3B82F6, #8B5CF6)",
-          "linear-gradient(45deg, #8B5CF6, #EC4899)",
-          "linear-gradient(45deg, #EC4899, #3B82F6)",
-        ],
-      }}
-      transition={{ duration: 3, repeat: Infinity }}
-      style={{
-        backgroundClip: "text",
-        WebkitBackgroundClip: "text",
-        color: "transparent",
-      }}
-    >
-      EduSmart
-    </motion.span>
-  </motion.div>
-);
-
 const Sidebar = ({ activeTab, setActiveTab, isOpen, onClose }) => {
   const menuItems = [
-    { id: 'dashboard', label: 'Dashboard', icon: Home, badge: null },
-    { id: 'learning', label: 'Learning', icon: PlayCircle, badge: '3' },
-    { id: 'courses', label: 'My Courses', icon: BookOpen, badge: null },
-    { id: 'analytics', label: 'Analytics', icon: BarChart3, badge: 'New' },
-    { id: 'achievements', label: 'Achievements', icon: Trophy, badge: '2' },
-    { id: 'profile', label: 'Profile', icon: User, badge: null },
-    { id: 'settings', label: 'Settings', icon: Settings, badge: null }
+    { id: "dashboard", label: "Dashboard", icon: Home, badge: null },
+    { id: "learning", label: "Learning", icon: PlayCircle, badge: "3" },
+    { id: "courses", label: "My Courses", icon: BookOpen, badge: null },
+    { id: "analytics", label: "Analytics", icon: BarChart3, badge: "New" },
+    { id: "achievements", label: "Achievements", icon: Trophy, badge: "2" },
+    { id: "profile", label: "Profile", icon: User, badge: null },
+    { id: "settings", label: "Settings", icon: Settings, badge: null },
   ];
 
   const handleItemClick = (itemId) => {
@@ -209,19 +132,16 @@ const Sidebar = ({ activeTab, setActiveTab, isOpen, onClose }) => {
     }
   };
 
-  // Enhanced glassmorphism styles
-  const sidebarBg = "bg-gradient-to-br from-white/95 via-blue-50/90 to-blue-100/80 dark:from-gray-950 dark:via-blue-900 dark:to-blue-950 backdrop-blur-2xl shadow-2xl border-r border-blue-200/30 dark:border-blue-900/30 transition-colors duration-500";
-
-  // Always visible on lg+ screens, controlled by isOpen on mobile
-  const showSidebar = (typeof window === "undefined" || window.innerWidth >= 1024) ? true : isOpen;
+  const showSidebar =
+    typeof window === "undefined" || window.innerWidth >= 1024 ? true : isOpen;
 
   return (
     <>
-      {/* Enhanced overlay for mobile */}
+      {/* Mobile Overlay */}
       <AnimatePresence>
         {isOpen && (
           <motion.div
-            className="fixed inset-0 bg-black/20 backdrop-blur-sm z-40 lg:hidden"
+            className="fixed inset-0 bg-black/50 backdrop-blur-sm z-40 lg:hidden"
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
@@ -231,31 +151,43 @@ const Sidebar = ({ activeTab, setActiveTab, isOpen, onClose }) => {
         )}
       </AnimatePresence>
 
-      {/* Enhanced Sidebar */}
+      {/* Sidebar */}
       <AnimatePresence>
         {showSidebar && (
-          <motion.div
-            className={`fixed rounded-sm left-0 top-0 h-full w-80 z-50 ${sidebarBg} lg:sticky lg:z-auto`}
+          <motion.aside
+            className="fixed left-0 top-0 bottom-0 w-72 sm:w-80 z-50 bg-card border-r border-border flex flex-col lg:sticky lg:top-0 lg:h-screen lg:z-auto"
             variants={menuVariants}
             initial="hidden"
             animate="visible"
             exit="exit"
           >
-            {/* Enhanced close button for mobile */}
+            {/* Close button for mobile */}
             <motion.button
               onClick={onClose}
-              className="absolute top-4 right-4 p-2 rounded-xl hover:bg-white/20 dark:hover:bg-gray-700/30 transition-colors duration-200 lg:hidden z-10"
+              className="absolute top-4 right-4 p-2 rounded-xl hover:bg-secondary transition-colors lg:hidden z-10"
               whileHover={{ scale: 1.1, rotate: 90 }}
               whileTap={{ scale: 0.9 }}
             >
-              <X className="w-5 h-5 text-gray-600 dark:text-gray-300" />
+              <X className="w-5 h-5 text-foreground" />
             </motion.button>
 
-            {/* Brand Logo */}
-            <BrandLogo />
+            {/* Logo Section */}
+            <div className="px-6 py-[18px] border-b border-border flex-shrink-0">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 bg-gradient-hero rounded-xl flex items-center justify-center shadow-md">
+                  <GraduationCap className="text-white" size={20} />
+                </div>
+                <div>
+                  <h2 className="text-xl font-black gradient-text">EduSmart</h2>
+                  <p className="text-xs text-muted-foreground font-medium">
+                    Learning Dashboard
+                  </p>
+                </div>
+              </div>
+            </div>
 
-            {/* Enhanced Navigation Menu */}
-            <nav className="flex-1 py-6">
+            {/* Navigation Menu - With better spacing */}
+            <nav className="flex-1 py-8 overflow-y-auto min-h-0">
               <div className="space-y-2 px-4">
                 {menuItems.map((item, i) => {
                   const Icon = item.icon;
@@ -268,80 +200,62 @@ const Sidebar = ({ activeTab, setActiveTab, isOpen, onClose }) => {
                       variants={itemVariants}
                       onClick={() => handleItemClick(item.id)}
                       className={`
-                        w-full flex items-center justify-between px-4 py-4 rounded-2xl
-                        font-semibold text-base transition-all duration-300 group
+                        w-full flex items-center justify-between px-4 py-3.5 rounded-xl
+                        font-semibold text-sm transition-all duration-300 group
                         relative overflow-hidden
-                        ${isActive
-                          ? 'bg-gradient-to-r from-blue-500/20 via-purple-500/15 to-blue-500/20 text-blue-700 dark:text-blue-300 shadow-lg shadow-blue-500/25'
-                          : 'text-gray-700 dark:text-gray-200 hover:bg-gradient-to-r hover:from-blue-200/50 hover:to-purple-200/40 hover:dark:from-blue-900/40 hover:dark:to-purple-900/40 hover:text-blue-900 dark:hover:text-blue-100 hover:shadow-md'
+                        ${
+                          isActive
+                            ? "bg-primary text-primary-foreground shadow-md"
+                            : "text-muted-foreground hover:bg-muted hover:text-foreground"
                         }
                       `}
-                      whileHover={{
-                        scale: 1.02,
-                        x: 4,
-                        transition: { duration: 0.2 }
-                      }}
+                      whileHover={{ scale: 1.02, x: 2 }}
                       whileTap={{ scale: 0.98 }}
                     >
-                      {/* Animated background for active state */}
+                      {/* Active indicator */}
                       {isActive && (
                         <motion.div
-                          className="absolute inset-0 bg-gradient-to-r from-blue-500/10 to-purple-500/10 rounded-2xl"
-                          layoutId="activeTab"
-                          transition={{ type: "spring", bounce: 0.2, duration: 0.6 }}
+                          className="absolute left-0 top-0 bottom-0 w-1 bg-accent rounded-r-full"
+                          layoutId="activeIndicator"
+                          transition={{
+                            type: "spring",
+                            bounce: 0.2,
+                            duration: 0.6,
+                          }}
                         />
                       )}
-                      
-                      {/* Glow effect on hover */}
-                      <motion.div
-                        className="absolute inset-0 bg-gradient-to-r from-blue-400/20 to-purple-400/20 rounded-2xl opacity-0 group-hover:opacity-100 transition-opacity duration-300 blur-sm"
-                        animate={isActive ? { opacity: 0.3 } : { opacity: 0 }}
-                      />
-                      
-                      <div className="flex items-center space-x-4 relative z-10">
+
+                      <div className="flex items-center gap-3 relative z-10">
                         <motion.div
                           whileHover={{ rotate: 10, scale: 1.1 }}
                           transition={{ duration: 0.2 }}
                         >
-                          <Icon className={`w-6 h-6 transition-colors duration-300 ${isActive ? 'text-blue-600 dark:text-blue-300' : 'text-gray-600 dark:text-gray-400 group-hover:text-blue-600 dark:group-hover:text-blue-200'}`} />
+                          <Icon className="w-5 h-5" />
                         </motion.div>
-                        <span className="relative">
-                          {item.label}
-                          {isActive && (
-                            <motion.div
-                              className="absolute -bottom-1 left-0 right-0 h-0.5 bg-gradient-to-r from-blue-500 to-purple-500 rounded-full"
-                              layoutId="underline"
-                              transition={{ type: "spring", bounce: 0.2, duration: 0.6 }}
-                            />
-                          )}
-                        </span>
+                        <span>{item.label}</span>
                       </div>
-                      
-                      {/* Enhanced badges */}
+
+                      {/* Badges */}
                       {item.badge && (
                         <motion.div
                           className={`
-                            px-2.5 py-1 rounded-full text-xs font-bold relative z-10
-                            ${item.badge === 'New' 
-                              ? 'bg-gradient-to-r from-green-400 to-emerald-500 text-white' 
-                              : 'bg-gradient-to-r from-red-400 to-pink-500 text-white'
+                            px-2 py-0.5 rounded-full text-xs font-bold
+                            ${
+                              item.badge === "New"
+                                ? "bg-success text-success-foreground"
+                                : "bg-accent text-accent-foreground"
                             }
                           `}
-                          initial={{ scale: 0, opacity: 0 }}
-                          animate={{ scale: 1, opacity: 1 }}
-                          transition={{ delay: 0.2 + i * 0.05, type: "spring", stiffness: 500 }}
+                          initial={{ scale: 0 }}
+                          animate={{ scale: 1 }}
+                          transition={{
+                            delay: 0.2 + i * 0.05,
+                            type: "spring",
+                            stiffness: 500,
+                          }}
                           whileHover={{ scale: 1.1 }}
                         >
                           {item.badge}
-                          
-                          {/* Pulse effect for new items */}
-                          {item.badge === 'New' && (
-                            <motion.div
-                              className="absolute inset-0 bg-green-400 rounded-full"
-                              animate={{ scale: [1, 1.3, 1], opacity: [0.7, 0, 0.7] }}
-                              transition={{ duration: 2, repeat: Infinity }}
-                            />
-                          )}
                         </motion.div>
                       )}
                     </motion.button>
@@ -350,36 +264,39 @@ const Sidebar = ({ activeTab, setActiveTab, isOpen, onClose }) => {
               </div>
             </nav>
 
-            {/* Enhanced Learning Streak Widget */}
-            <StreakWidget />
-            
-            {/* Bottom decoration */}
-            <motion.div
-              className="px-4 pb-4"
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.8 }}
-            >
-              <div className="flex items-center justify-center space-x-1 text-gray-400 dark:text-gray-500">
-                {[...Array(3)].map((_, i) => (
-                  <motion.div
-                    key={i}
-                    animate={{ 
-                      scale: [1, 1.2, 1],
-                      opacity: [0.5, 1, 0.5]
-                    }}
-                    transition={{ 
-                      duration: 1.5, 
-                      repeat: Infinity, 
-                      delay: i * 0.2 
-                    }}
-                  >
-                    <Star className="w-3 h-3 fill-current" />
-                  </motion.div>
-                ))}
-              </div>
-            </motion.div>
-          </motion.div>
+            {/* Bottom Section */}
+            <div className="flex-shrink-0 mt-auto">
+              {/* Streak Widget */}
+              <StreakWidget />
+
+              {/* Bottom decoration */}
+              <motion.div
+                className="px-4 pb-6"
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.8 }}
+              >
+                <div className="flex items-center justify-center gap-1 text-muted-foreground">
+                  {[...Array(3)].map((_, i) => (
+                    <motion.div
+                      key={i}
+                      animate={{
+                        scale: [1, 1.2, 1],
+                        opacity: [0.5, 1, 0.5],
+                      }}
+                      transition={{
+                        duration: 1.5,
+                        repeat: Infinity,
+                        delay: i * 0.2,
+                      }}
+                    >
+                      <Star className="w-3 h-3 fill-current" />
+                    </motion.div>
+                  ))}
+                </div>
+              </motion.div>
+            </div>
+          </motion.aside>
         )}
       </AnimatePresence>
     </>

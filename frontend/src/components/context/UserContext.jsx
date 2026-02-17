@@ -1,7 +1,7 @@
 import React, { createContext, useContext, useState, useEffect } from "react";
 import { userData as mockUserData } from "../../data/mockData";
 import { useAvatarUpload } from "../../hooks/useAvatarUpload";
-import API from "../../api/axios"; 
+import API from "../../api/axios";
 
 const UserContext = createContext();
 
@@ -10,7 +10,7 @@ function mergeUserWithMock(user) {
   return {
     ...mockUserData,
     ...user,
-    stats: { ...mockUserData.stats, ...(user.stats || {}) }
+    stats: { ...mockUserData.stats, ...(user.stats || {}) },
   };
 }
 
@@ -55,9 +55,9 @@ export const UserProvider = ({ children }) => {
 
   const updateAvatar = async (file) => {
     try {
-      const updatedData = await uploadAvatar(file); 
+      const updatedData = await uploadAvatar(file);
       if (!updatedData) throw new Error("No data from avatar upload");
-      setUser(updatedData); 
+      setUser(updatedData);
     } catch (error) {
       console.error("Error updating avatar:", error);
     }

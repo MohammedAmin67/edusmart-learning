@@ -1,127 +1,172 @@
-import React from 'react';
-import { PlayCircle, Clock, Award } from 'lucide-react';
-import Card from '../shared/Card';
-import Button from '../shared/Button';
-import ProgressBar from '../shared/ProgressBar';
-import { courses, currentLesson } from '../../data/mockData';
-import { motion } from 'framer-motion';
+import React from "react";
+import { motion } from "framer-motion";
+import {
+  PlayCircle,
+  Clock,
+  BookOpen,
+  TrendingUp,
+  ArrowRight,
+} from "lucide-react";
 
-const fadeInUp = (i = 0) => ({
-  initial: { opacity: 0, y: 28, scale: 0.98 },
-  animate: { opacity: 1, y: 0, scale: 1, transition: { delay: i * 0.12, duration: 0.66, type: 'spring' } }
-});
+const ContinueLearning = ({ courses, onCourseClick, onViewAll }) => {
+  const currentCourses = Array.isArray(courses)
+    ? courses.filter((c) => c?.progress > 0 && c?.progress < 100).slice(0, 3)
+    : [];
 
-const ContinueLearning = ({ setActiveTab }) => {
-  const recentCourses = courses.filter(course => course.progress > 0 && course.progress < 100);
+  if (currentCourses.length === 0) {
+    return (
+      <div className="space-y-4">
+        <div className="flex items-center justify-between">
+          <h2 className="text-3xl font-black text-foreground">
+            Continue Learning
+          </h2>
+        </div>
+        <motion.div
+          className="bg-card rounded-2xl p-12 border border-border text-center"
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+        >
+          <BookOpen className="w-16 h-16 text-muted-foreground mx-auto mb-4" />
+          <h3 className="text-xl font-bold text-foreground mb-2">
+            No courses in progress
+          </h3>
+          <p className="text-muted-foreground mb-6">
+            Start a new course to begin your learning journey!
+          </p>
+          <button
+            onClick={onViewAll}
+            className="px-6 py-3 bg-accent text-accent-foreground rounded-xl font-bold hover:scale-105 transition-all duration-300 inline-flex items-center gap-2"
+          >
+            Browse Courses
+            <ArrowRight size={18} />
+          </button>
+        </motion.div>
+      </div>
+    );
+  }
 
   return (
-    <motion.div
-      className="flex flex-col gap-8 mt-8 transition-colors duration-500"
-      initial="initial"
-      animate="animate"
-      variants={{
-        initial: {},
-        animate: { transition: { staggerChildren: 0.13, delayChildren: 0.08 } }
-      }}
-    >
-      <motion.div {...fadeInUp(0)} className="flex items-center justify-between">
-        <h2 className="text-2xl font-extrabold text-gray-900 dark:text-gray-100 tracking-tight">
-          Continue Learning
-        </h2>
-        <Button 
-          variant="outline" 
-          size="sm"
-          className="hover:scale-105 transition"
-          onClick={() => setActiveTab('courses')}
+    <div className="space-y-6">
+      {/* Header */}
+      <div className="flex items-center justify-between">
+        <motion.h2
+          className="text-3xl font-black text-foreground"
+          initial={{ opacity: 0, x: -20 }}
+          animate={{ opacity: 1, x: 0 }}
         >
-          View All Courses
-        </Button>
-      </motion.div>
+          Continue Learning
+        </motion.h2>
+        <motion.button
+          onClick={onViewAll}
+          className="px-4 py-2 bg-primary/10 hover:bg-primary/20 text-primary rounded-xl font-semibold text-sm transition-all duration-300 hover:scale-105 flex items-center gap-2"
+          whileHover={{ scale: 1.05 }}
+          whileTap={{ scale: 0.95 }}
+        >
+          <span>View All Courses</span>
+          <ArrowRight size={16} />
+        </motion.button>
+      </div>
 
-      {/* Current Lesson */}
-      <motion.div {...fadeInUp(1)}>
-        <Card className="glass-card bg-gradient-to-tr from-blue-100/80 via-purple-50/70 to-white/70 dark:from-gray-900/80 dark:via-purple-900/70 dark:to-gray-900/70 border-0 rounded-2xl p-7 shadow-xl transition-colors duration-500">
-          <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
-            <div className="flex-1">
-              <div className="flex items-center space-x-2 mb-2">
-                <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
-                <span className="text-sm text-green-700 dark:text-green-300 font-bold tracking-wide glow">Currently Learning</span>
+      {/* Courses Grid */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-6">
+        {currentCourses.map((course, index) => (
+          <motion.div
+            key={course.id}
+            className="group bg-card rounded-2xl border border-border hover:border-primary/30 overflow-hidden cursor-pointer transition-all duration-300 hover:shadow-lg"
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: index * 0.1 }}
+            whileHover={{ y: -4 }}
+            onClick={() => onCourseClick && onCourseClick(course.id)}
+          >
+            {/* Course Image */}
+            <div className="relative h-40 bg-gradient-to-br from-primary/20 to-accent/10 overflow-hidden">
+              {course.thumbnail ? (
+                <img
+                  src={course.thumbnail}
+                  alt={course.title}
+                  className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                />
+              ) : (
+                <div className="w-full h-full flex items-center justify-center">
+                  <BookOpen className="w-16 h-16 text-primary/40" />
+                </div>
+              )}
+              {/* Progress Badge */}
+              <div className="absolute top-3 right-3 bg-card/95 backdrop-blur-sm px-3 py-1.5 rounded-full border border-border">
+                <span className="text-xs font-bold text-primary">
+                  {Math.round(course.progress || 0)}% Complete
+                </span>
               </div>
-              <h3 className="text-2xl font-bold text-gray-900 dark:text-gray-100 mb-1">{currentLesson.title}</h3>
-              <p className="text-gray-700 dark:text-gray-300 text-base mb-3">{currentLesson.description}</p>
-              <div className="flex items-center space-x-6 text-base text-gray-500 dark:text-gray-300 font-medium">
-                <div className="flex items-center space-x-1">
-                  <Clock size={18} />
-                  <span>{currentLesson.duration} min</span>
-                </div>
-                <div className="flex items-center space-x-1">
-                  <Award size={18} className="" />
-                  <span>{currentLesson.xpReward} XP</span>
-                </div>
+              {/* Play Button Overlay */}
+              <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-center justify-center">
+                <motion.div
+                  className="w-16 h-16 bg-primary rounded-full flex items-center justify-center"
+                  whileHover={{ scale: 1.1 }}
+                >
+                  <PlayCircle className="w-8 h-8 text-white fill-white" />
+                </motion.div>
               </div>
             </div>
-            <Button 
-              icon={<PlayCircle size={22} />}
-              onClick={() => setActiveTab('learning')}
-              className="ml-0 md:ml-4 mt-4 md:mt-0 bg-gradient-to-r from-blue-600 to-purple-600 text-white shadow-lg hover:scale-105 transition"
-              size="lg"
-            >
-              Continue
-            </Button>
-          </div>
-        </Card>
-      </motion.div>
 
-      {/* Recent Courses */}
-      <motion.div
-        className="grid grid-cols-1 md:grid-cols-2 gap-6"
-        initial="initial"
-        animate="animate"
-        variants={{
-          initial: {},
-          animate: { transition: { staggerChildren: 0.12, delayChildren: 0.07 } }
-        }}
-      >
-        {recentCourses.map((course, i) => (
-          <motion.div key={course.id} {...fadeInUp(i)}>
-            <Card className="rounded-2xl p-7 glass-card bg-white/60 dark:bg-gray-800/60 backdrop-blur-lg shadow-lg border-0 transition-all duration-300 hover:scale-[1.01]">
-              <div className="flex items-start justify-between mb-3">
-                <div className={`w-3 h-3 ${course.color} rounded-full mt-1 shadow-lg`}></div>
-                <div className="text-sm text-gray-500 dark:text-gray-300 font-semibold">{course.difficulty}</div>
+            {/* Course Info */}
+            <div className="p-5">
+              {/* Category Badge */}
+              <div className="inline-block px-3 py-1 bg-primary/10 text-primary text-xs font-bold rounded-full mb-3">
+                Currently Learning
               </div>
-              <h4 className="font-semibold text-xl text-gray-900 dark:text-gray-100 mb-2">{course.title}</h4>
-              <p className="text-gray-700 dark:text-gray-300 text-base mb-3">{course.description}</p>
-              <div className="space-y-2 mb-4">
-                <div className="flex justify-between text-sm font-medium">
-                  <span className="text-gray-500 dark:text-gray-300">Progress</span>
-                  <span className="font-semibold">{course.completedLessons}/{course.totalLessons} lessons</span>
+
+              {/* Title */}
+              <h3 className="text-lg font-black text-foreground mb-2 line-clamp-2 group-hover:text-primary transition-colors">
+                {course.title}
+              </h3>
+
+              {/* Meta Info */}
+              <div className="flex items-center gap-4 text-xs text-muted-foreground mb-4">
+                <div className="flex items-center gap-1">
+                  <Clock size={14} />
+                  <span>{course.duration || "2h 30m"}</span>
                 </div>
-                <ProgressBar 
-                  progress={course.progress} 
-                  color={course.color.replace('bg-', '').replace('-500', '')} 
-                  animated 
-                  className="shadow"
-                />
-              </div>
-              <div className="flex items-center justify-between">
-                <div className="flex items-center text-sm text-gray-500 dark:text-gray-300">
-                  <Clock size={16} className="mr-1" />
-                  {course.estimatedTime} min remaining
+                <div className="flex items-center gap-1">
+                  <BookOpen size={14} />
+                  <span>{course.lessons?.length || 12} lessons</span>
                 </div>
-                <Button 
-                  variant="ghost" 
-                  size="sm"
-                  className="hover:scale-105 transition"
-                  onClick={() => setActiveTab('courses')}
-                >
-                  Resume
-                </Button>
               </div>
-            </Card>
+
+              {/* Progress Bar */}
+              <div className="space-y-2">
+                <div className="flex justify-between text-xs font-semibold">
+                  <span className="text-muted-foreground">Progress</span>
+                  <span className="text-primary">
+                    {Math.round(course.progress || 0)}%
+                  </span>
+                </div>
+                <div className="h-2 bg-muted rounded-full overflow-hidden">
+                  <motion.div
+                    className="h-full bg-gradient-to-r from-primary to-accent rounded-full"
+                    initial={{ width: 0 }}
+                    animate={{ width: `${course.progress || 0}%` }}
+                    transition={{ duration: 1, delay: 0.2 + index * 0.1 }}
+                  />
+                </div>
+              </div>
+
+              {/* Continue Button */}
+              <button
+                className="w-full mt-4 px-4 py-2.5 bg-primary text-primary-foreground rounded-xl font-bold text-sm hover:scale-105 transition-all duration-300 flex items-center justify-center gap-2"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  onCourseClick && onCourseClick(course.id);
+                }}
+              >
+                <PlayCircle size={16} />
+                <span>Continue Learning</span>
+              </button>
+            </div>
           </motion.div>
         ))}
-      </motion.div>
-    </motion.div>
+      </div>
+    </div>
   );
 };
 

@@ -1,449 +1,440 @@
-import React, { useState, useRef, useEffect } from 'react';
-import { TrendingUp, Clock, Target, Award, ArrowUpRight, ArrowDownRight, Star } from 'lucide-react';
-import Card from '../shared/Card';
-import ProgressBar from '../shared/ProgressBar';
-import { analyticsData } from '../../data/mockData';
-import { motion } from 'framer-motion';
+import React, { useState } from "react";
+import { motion } from "framer-motion";
+import {
+  LineChart,
+  Line,
+  BarChart,
+  Bar,
+  PieChart,
+  Pie,
+  Cell,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  Tooltip,
+  Legend,
+  ResponsiveContainer,
+  RadarChart,
+  PolarGrid,
+  PolarAngleAxis,
+  PolarRadiusAxis,
+  Radar,
+} from "recharts";
+import {
+  TrendingUp,
+  Clock,
+  Target,
+  Award,
+  Calendar,
+  BarChart3,
+  Activity,
+  Zap,
+} from "lucide-react";
+import { useUser } from "../context/UserContext";
 
-// Animation variant helpers
-const fadeInUp = (i = 0) => ({
-  initial: { opacity: 0, y: 32, scale: 0.98 },
-  animate: { opacity: 1, y: 0, scale: 1, transition: { delay: i * 0.13, duration: 0.62, type: 'spring' } }
-});
+const AnalyticsCharts = () => {
+  const { user } = useUser();
+  const [timeRange, setTimeRange] = useState("week"); // week, month, year
 
-// Helper to pick color based on accuracy
-const getColor = (accuracy) =>
-  accuracy >= 90 ? 'green' : accuracy >= 80 ? 'blue' : accuracy >= 70 ? 'yellow' : 'red';
-
-const getChartData = (days) => {
-  if (!analyticsData.weeklyChart) return [];
-  if (days <= analyticsData.weeklyChart.length) {
-    return analyticsData.weeklyChart.slice(-days);
-  }
-  const emptyDay = { day: '', xp: 0, minutes: 0 };
-  return [
-    ...Array(days - analyticsData.weeklyChart.length).fill(emptyDay),
-    ...analyticsData.weeklyChart
+  // Mock data for charts
+  const weeklyData = [
+    { name: "Mon", xp: 120, lessons: 3, time: 45 },
+    { name: "Tue", xp: 180, lessons: 5, time: 68 },
+    { name: "Wed", xp: 150, lessons: 4, time: 52 },
+    { name: "Thu", xp: 220, lessons: 6, time: 85 },
+    { name: "Fri", xp: 190, lessons: 5, time: 71 },
+    { name: "Sat", xp: 280, lessons: 8, time: 120 },
+    { name: "Sun", xp: 160, lessons: 4, time: 60 },
   ];
-};
 
-const STORAGE_KEY = 'analytics_days_selected';
+  const courseProgress = [
+    { name: "JavaScript", value: 85, color: "hsl(var(--primary))" },
+    { name: "React", value: 65, color: "hsl(var(--accent))" },
+    { name: "Node.js", value: 45, color: "hsl(var(--success))" },
+    { name: "TypeScript", value: 30, color: "hsl(var(--warning))" },
+  ];
 
-// Helper to get weekday names for 7-day data (assumes you have a .date or .day property)
-const getWeekdayLabels = (data) => {
-  // Try to get weekday from a date property (ISO string or Date), or fallback to Mon-Sun rolling
-  if (data.length === 7) {
-    // Try to parse weekday from a date property if available
-    if (data[0] && data[0].date) {
-      // Assume .date is ISO string
-      return data.map(d => {
-        const date = new Date(d.date);
-        // Format as 'Mon', 'Tue', etc.
-        return date.toLocaleDateString('en-US', { weekday: 'short' });
-      });
-    }
-    // Fallback: rolling weekdays, assuming last is today
-    const weekdays = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
-    const today = new Date();
-    // Get the index for today (0=Sun, 6=Sat)
-    let lastIndex = today.getDay();
-    // Return the last 7 weekdays, ending with today
-    return Array.from({ length: 7 }, (_, i) => weekdays[(lastIndex - 6 + i + 7) % 7]);
-  }
-  // Fallback: empty or keep .day
-  return data.map(d => d.day || '');
-};
+  const skillsData = [
+    { subject: "Frontend", A: 85, fullMark: 100 },
+    { subject: "Backend", A: 70, fullMark: 100 },
+    { subject: "Database", A: 60, fullMark: 100 },
+    { subject: "DevOps", A: 45, fullMark: 100 },
+    { subject: "Testing", A: 75, fullMark: 100 },
+    { subject: "Design", A: 55, fullMark: 100 },
+  ];
 
-const AnalyticsCharts = ({ activeTab }) => {
-  // Responsive: Track window width
-  const [windowWidth, setWindowWidth] = useState(
-    typeof window !== 'undefined' ? window.innerWidth : 1200
-  );
-  useEffect(() => {
-    const handleResize = () => setWindowWidth(window.innerWidth);
-    window.addEventListener('resize', handleResize);
-    return () => window.removeEventListener('resize', handleResize);
-  }, []);
-  const isMobile = windowWidth < 768;
+  const stats = [
+    {
+      icon: TrendingUp,
+      label: "Total XP",
+      value: user?.totalXP || 2850,
+      change: "+12%",
+      changePositive: true,
+      color: "text-primary",
+      bgColor: "bg-primary/10",
+    },
+    {
+      icon: Clock,
+      label: "Study Time",
+      value: "42.5h",
+      change: "+8%",
+      changePositive: true,
+      color: "text-accent",
+      bgColor: "bg-accent/10",
+    },
+    {
+      icon: Target,
+      label: "Accuracy",
+      value: "87%",
+      change: "+3%",
+      changePositive: true,
+      color: "text-success",
+      bgColor: "bg-success/10",
+    },
+    {
+      icon: Award,
+      label: "Completed",
+      value: "24",
+      change: "+5",
+      changePositive: true,
+      color: "text-warning",
+      bgColor: "bg-warning/10",
+    },
+  ];
 
-  // Days selection: allow 7 on all, 30 only on desktop/tablet
-  const [days, setDays] = useState(() => {
-    const saved = sessionStorage.getItem(STORAGE_KEY);
-    const d = saved ? Number(saved) : 7;
-    return (typeof window !== "undefined" && window.innerWidth < 768) ? 7 : d;
-  });
-
-  // If resizing to mobile, force days=7
-  useEffect(() => {
-    if (isMobile && days !== 7) setDays(7);
-    // eslint-disable-next-line
-  }, [isMobile]);
-
-  const chartContainer = useRef(null);
-  const [chartWidth, setChartWidth] = useState(500);
-
-  // To trigger width recalculation on tab switch or section visibility
-  useEffect(() => {
-    const updateWidth = () => {
-      if (chartContainer.current) {
-        const width = chartContainer.current.offsetWidth || 500;
-        setChartWidth(width);
-      }
-    };
-    updateWidth();
-
-    let observer;
-    if (chartContainer.current && 'ResizeObserver' in window) {
-      observer = new window.ResizeObserver(() => {
-        updateWidth();
-      });
-      observer.observe(chartContainer.current);
-    } else {
-      window.addEventListener('resize', updateWidth);
-    }
-
-    if (typeof activeTab !== "undefined") {
-      setTimeout(updateWidth, 120);
-    }
-
-    return () => {
-      if (observer && chartContainer.current) {
-        observer.disconnect();
-      } else {
-        window.removeEventListener('resize', updateWidth);
-      }
-    };
-  }, [days, activeTab]);
-
-  useEffect(() => {
-    sessionStorage.setItem(STORAGE_KEY, days);
-  }, [days]);
-
-  const data = getChartData(days);
-
-  // Small chart padding to avoid bar clipping
-  const chartPadding = 10;
-  const chartHeight = 140;
-  // SVG uses 100% for width, viewBox for scaling
-  const barCount = data.length;
-  const internalWidth = chartWidth - 2 * chartPadding > 0 ? chartWidth - 2 * chartPadding : 10;
-  const barGap = barCount > 0 ? (internalWidth / barCount) : 1;
-  const barWidth = Math.max(barGap * 0.45, 10);
-  const maxMinutes = Math.max(...data.map(day => Number.isFinite(day.minutes) ? day.minutes : 0), 1);
-  const maxXP = Math.max(...data.map(day => Number.isFinite(day.xp) ? day.xp : 0), 1);
-
-  const subjectPerformance = analyticsData.subjectPerformance || [];
-  const topSubject = subjectPerformance.length
-    ? subjectPerformance.reduce((top, curr) => (curr.accuracy > top.accuracy ? curr : top), subjectPerformance[0])
-    : {};
-
-  // Weekday labels for X axis if days===7
-  const weekdayLabels = days === 7 ? getWeekdayLabels(data) : undefined;
+  const timeRanges = [
+    { value: "week", label: "Week" },
+    { value: "month", label: "Month" },
+    { value: "year", label: "Year" },
+  ];
 
   return (
-    <motion.div
-      initial={{ opacity: 0, y: 24 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.2 }}
-      className="space-y-8 transition-colors duration-500"
-      style={{ boxSizing: 'border-box', width: '100%' }}
-    >
-      <motion.div {...fadeInUp(0)} className="flex flex-col md:flex-row md:items-center md:justify-between gap-3">
-        <h2 className="text-3xl font-extrabold text-gray-900 dark:text-gray-100">Learning Analytics</h2>
-        <div className="flex space-x-2">
-        <motion.button
-          whileHover={{ scale: 1.03 }}
-          transition={{ type: 'spring', stiffness: 250 }}
-          className={`px-3 py-1 text-sm rounded-lg font-bold shadow 
-            transition-colors duration-200
-            ${days === 7
-              ? 'bg-blue-500 text-white dark:bg-blue-400 dark:text-gray-900'
-              : 'text-gray-500 dark:text-gray-300 hover:bg-blue-100 dark:hover:bg-blue-900 hover:text-blue-800 dark:hover:text-blue-300'}`}
-          onClick={() => setDays(7)}
-          aria-pressed={days === 7}
+    <div className="min-h-screen bg-background transition-colors duration-300">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-4 sm:pt-6 lg:pt-8 pb-8 space-y-6 sm:space-y-8">
+        {/* Header */}
+        <motion.div
+          className="space-y-1"
+          initial={{ opacity: 0, y: -20 }}
+          animate={{ opacity: 1, y: 0 }}
         >
-          7 Days
-        </motion.button>
-        {!isMobile && (
-          <motion.button
-            whileHover={{ scale: 1.03 }}
-            transition={{ type: 'spring', stiffness: 250 }}
-            className={`px-3 py-1 text-sm rounded-lg font-bold shadow 
-              transition-colors duration-200
-              ${days === 30
-                ? 'bg-blue-500 text-white dark:bg-blue-400 dark:text-gray-900'
-                : 'text-gray-500 dark:text-gray-300 hover:bg-blue-100 dark:hover:bg-blue-900 hover:text-blue-800 dark:hover:text-blue-300'}`}
-            onClick={() => setDays(30)}
-            aria-pressed={days === 30}
-          >
-            30 Days
-          </motion.button>
-        )}
-      </div>
-      </motion.div>
+          <h1 className="text-2xl sm:text-3xl lg:text-4xl font-black text-foreground">
+            Analytics <span className="gradient-text">Dashboard</span>
+          </h1>
+          <p className="text-sm sm:text-base text-muted-foreground font-medium">
+            Track your learning progress and performance
+          </p>
+        </motion.div>
 
-      {/* Weekly Progress Responsive SVG Chart */}
-      <div>
-        <Card className="glass-card p-4 sm:p-8 rounded-2xl shadow-xl bg-gradient-to-tr from-blue-100 via-purple-50 to-white dark:from-gray-900 dark:via-gray-800 dark:to-gray-900 border-0 transition-colors duration-500"
-              style={{ boxSizing: 'border-box', width: '100%', maxWidth: '100%' }}>
-          <h3 className="text-xl font-bold mb-5 text-blue-900 dark:text-blue-200">Weekly Activity</h3>
-          <div
-            ref={chartContainer}
-            style={{
-              width: '100%',
-              maxWidth: '100%',
-              boxSizing: 'border-box',
-              overflowX: 'hidden',
-              overflowY: 'hidden',
-              padding: 0,
-              margin: 0,
-              background: 'none',
-            }}>
-            <svg
-              width="100%"
-              height={chartHeight + 52}
-              viewBox={`0 0 ${chartWidth} ${chartHeight + 52}`}
-              preserveAspectRatio="none"
-              className="block"
-              style={{ display: 'block', maxWidth: '100%' }}
+        {/* Time Range Selector */}
+        <motion.div
+          className="flex gap-2 overflow-x-auto pb-2"
+          initial={{ opacity: 0, x: -20 }}
+          animate={{ opacity: 1, x: 0 }}
+          transition={{ delay: 0.1 }}
+        >
+          {timeRanges.map((range) => (
+            <button
+              key={range.value}
+              onClick={() => setTimeRange(range.value)}
+              className={`px-4 py-2 rounded-xl font-semibold text-sm whitespace-nowrap transition-all duration-300 ${
+                timeRange === range.value
+                  ? "bg-primary text-primary-foreground shadow-md"
+                  : "bg-card text-muted-foreground hover:bg-muted border border-border"
+              }`}
             >
-              {/* Y axis grid lines */}
-              {[0, 0.25, 0.5, 0.75, 1].map((v, i) =>
-                <line
-                  key={i}
-                  x1={chartPadding}
-                  x2={chartWidth - chartPadding}
-                  y1={18 + chartHeight - chartHeight * v}
-                  y2={18 + chartHeight - chartHeight * v}
-                  stroke="#e5e7eb"
-                  strokeDasharray="2,2"
-                />
-              )}
-              {/* XP Line */}
-              <polyline
-                fill="none"
-                stroke="#a78bfa"
-                strokeWidth="2"
-                points={
-                  data.map((day, i) => {
-                    const safeXP = Number.isFinite(day.xp) ? day.xp : 0;
-                    const y = 18 + chartHeight - (safeXP / maxXP) * (chartHeight - 28);
-                    const x = chartPadding + barGap * i + barGap / 2;
-                    return `${x},${y}`;
-                  }).join(' ')
-                }
-                className="transition-all duration-700"
-              />
-              {/* Bars */}
-              {data.map((day, i) => {
-                if (!day || day.day == null) return null;
-                const safeXP = Number.isFinite(day.xp) ? day.xp : 0;
-                const safeMinutes = Number.isFinite(day.minutes) ? day.minutes : 0;
-                const xpY = 18 + chartHeight - (safeXP / maxXP) * (chartHeight - 28);
-                const minBarY = 18 + chartHeight - (safeMinutes / maxMinutes) * (chartHeight - 28);
-                const baseX = chartPadding + barGap * i;
-                return (
-                  <g key={day.day || i}>
-                    {/* XP Bar */}
-                    <rect
-                      x={baseX + (barGap - barWidth) / 2}
-                      y={xpY}
-                      width={barWidth}
-                      height={(safeXP / maxXP) * (chartHeight - 28)}
-                      fill="#a78bfa"
-                      rx="4"
-                      className="transition-all duration-700"
-                    />
-                    {/* Minutes Bar */}
-                    <rect
-                      x={baseX + (barGap - barWidth) / 2 + barWidth * 0.18}
-                      y={minBarY}
-                      width={barWidth * 0.65}
-                      height={(safeMinutes / maxMinutes) * (chartHeight - 28)}
-                      fill="#3b82f6"
-                      rx="3"
-                      className="transition-all duration-700"
-                      opacity="0.85"
-                    />
-                    {/* XP point */}
-                    <circle
-                      cx={baseX + barGap / 2}
-                      cy={xpY}
-                      r="4"
-                      fill="#a78bfa"
-                      stroke="#fff"
-                      strokeWidth="2"
-                    />
-                    {/* XP label above the point */}
-                    <text
-                      x={baseX + barGap / 2}
-                      y={xpY - 8}
-                      textAnchor="middle"
-                      fontSize="11"
-                      fill="#7c3aed"
-                      fontWeight={700}
-                      style={{ pointerEvents: 'none' }}
-                    >{safeXP}</text>
-                    {/* Minutes label below the bar */}
-                    <text
-                      x={baseX + barGap / 2}
-                      y={chartHeight + 28}
-                      textAnchor="middle"
-                      fontSize="11"
-                      fill="#2563eb"
-                      fontWeight={700}
-                      style={{ pointerEvents: 'none' }}
-                    >{safeMinutes}m</text>
-                  </g>
-                );
-              })}
-              {/* Day labels (use weekday names for 7 days, otherwise fallback to .day) */}
-              {data.map((day, i, arr) => {
-                if (!day) return null;
-                // Show all x labels for 7 days; for 30 days, show sparsely
-                if (days === 7 || i === 0 || (i + 1) % 5 === 0 || i === arr.length - 1) {
-                  return (
-                    <text
-                      key={`label-${i}`}
-                      x={chartPadding + barGap * i + barGap / 2}
-                      y={chartHeight + 46}
-                      textAnchor="middle"
-                      fontSize="11"
-                      fill="#444"
-                    >
-                      {days === 7
-                        ? (weekdayLabels ? weekdayLabels[i] : '')
-                        : (day.day || '')}
-                    </text>
-                  );
-                }
-                return null;
-              })}
-            </svg>
-            {/* Legend stays OUTSIDE scroll area */}
+              {range.label}
+            </button>
+          ))}
+        </motion.div>
+
+        {/* Stats Grid */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-5 lg:gap-6">
+          {stats.map((stat, index) => (
             <motion.div
-              initial={{ opacity: 0, y: 14 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true }}
-              transition={{ duration: 0.6, delay: 0.5 }}
-              className="flex flex-wrap sm:flex-nowrap justify-center space-x-4 space-y-1 sm:space-y-0 mt-3"
+              key={stat.label}
+              className="bg-card rounded-2xl p-5 sm:p-6 border border-border hover:border-primary/30 transition-all duration-300 hover:shadow-lg"
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.1 + index * 0.05 }}
+              whileHover={{ y: -4 }}
             >
-              <div className="flex items-center space-x-2">
-                <div className="w-3 h-3 bg-blue-500 rounded shadow"></div>
-                <span className="text-sm text-gray-700 dark:text-gray-200 font-medium">Study Time</span>
-              </div>
-              <div className="flex items-center space-x-2">
-                <div className="w-3 h-3 bg-purple-400 rounded shadow"></div>
-                <span className="text-sm text-gray-700 dark:text-gray-200 font-medium">XP Earned</span>
-              </div>
-            </motion.div>
-          </div>
-        </Card>
-      </div>
-
-      {/* Subject Performance */}
-      <motion.div {...fadeInUp(2)}>
-        <Card className="glass-card p-4 sm:p-8 rounded-2xl bg-gradient-to-tr from-white to-blue-50 dark:from-gray-900 dark:to-blue-950 border-0 shadow-lg transition-colors duration-500"
-              style={{ boxSizing: 'border-box', width: '100%', maxWidth: '100%' }}>
-          <h3 className="text-xl font-bold mb-5 text-purple-900 dark:text-purple-200">Subject Performance</h3>
-          <motion.div
-            initial="hidden"
-            whileInView="visible"
-            viewport={{ once: true }}
-            variants={{
-              hidden: {},
-              visible: { transition: { staggerChildren: 0.09, delayChildren: 0.18 } }
-            }}
-            className="space-y-6"
-          >
-            {subjectPerformance.map((subject, idx) => (
-              <motion.div key={subject.subject || idx} {...fadeInUp(idx)}>
-                <div className="space-y-2">
-                  <div className="flex justify-between items-center">
-                    <span className="font-semibold text-gray-900 dark:text-gray-100 flex items-center gap-1">
-                      {subject.subject}
-                      {subject.subject === topSubject.subject && (
-                        <Star className="ml-1 text-yellow-400" size={15} />
-                      )}
-                    </span>
-                    <span className="text-sm text-gray-500 dark:text-gray-300">{subject.accuracy}% accuracy</span>
-                  </div>
-                  <ProgressBar 
-                    progress={subject.accuracy} 
-                    color={getColor(subject.accuracy)} 
-                    animated 
-                    className="shadow"
-                  />
-                  <div className="flex justify-between text-xs text-gray-500 dark:text-gray-400">
-                    <span>{subject.timeSpent} minutes spent</span>
-                    <span>{subject.lessonsCompleted} lessons completed</span>
-                  </div>
+              <div className="flex items-start justify-between mb-4">
+                <div
+                  className={`w-12 h-12 ${stat.bgColor} rounded-xl flex items-center justify-center`}
+                >
+                  <stat.icon className={`w-6 h-6 ${stat.color}`} />
                 </div>
-              </motion.div>
-            ))}
-          </motion.div>
-        </Card>
-      </motion.div>
-
-      {/* Monthly Stats with trend icons */}
-      <motion.div
-        initial="hidden"
-        whileInView="visible"
-        viewport={{ once: true }}
-        variants={{
-          hidden: {},
-          visible: { transition: { staggerChildren: 0.09, delayChildren: 0.1 } }
-        }}
-        className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6"
-      >
-        {[
-          {
-            icon: <Clock className="w-10 h-10 text-blue-500 mx-auto mb-2 animate-pulse" />,
-            value: analyticsData.monthlyStats?.totalMinutes || 0,
-            label: "Total Minutes",
-            trend: <ArrowUpRight className="text-green-500" />,
-            color: "text-gray-900 dark:text-gray-100",
-            bg: "from-blue-100 to-purple-50 dark:from-gray-800 dark:to-purple-900 border-blue-200 dark:border-blue-900"
-          },
-          {
-            icon: <Target className="w-10 h-10 text-green-500 mx-auto mb-2 animate-pulse" />,
-            value: analyticsData.monthlyStats?.totalLessons || 0,
-            label: "Lessons Completed",
-            trend: <ArrowDownRight className="text-red-400" />,
-            color: "text-gray-900 dark:text-gray-100",
-            bg: "from-green-100 to-green-50 dark:from-green-900 dark:to-green-800 border-green-200 dark:border-green-900"
-          },
-          {
-            icon: <TrendingUp className="w-10 h-10 text-purple-500 mx-auto mb-2 animate-pulse" />,
-            value: (analyticsData.monthlyStats?.averageAccuracy || 0) + "%",
-            label: "Average Accuracy",
-            trend: <ArrowUpRight className="text-green-500" />,
-            color: "text-gray-900 dark:text-gray-100",
-            bg: "from-purple-100 to-blue-50 dark:from-purple-900 dark:to-blue-900 border-purple-200 dark:border-purple-900"
-          },
-          {
-            icon: <Award className="w-10 h-10 text-yellow-500 mx-auto mb-2 animate-pulse" />,
-            value: analyticsData.monthlyStats?.bestStreak || 0,
-            label: "Best Streak (days)",
-            trend: <ArrowUpRight className="text-green-500" />,
-            color: "text-gray-900 dark:text-gray-100",
-            bg: "from-yellow-100 to-orange-50 dark:from-yellow-900 dark:to-orange-900 border-yellow-200 dark:border-yellow-900"
-          }
-        ].map((item, i) => (
-          <motion.div key={item.label} {...fadeInUp(i)}>
-            <Card className={`text-center bg-gradient-to-br ${item.bg} rounded-2xl shadow-lg glass-card transition-colors duration-500`}
-                  style={{ boxSizing: 'border-box', width: '100%', maxWidth: '100%' }}>
-              {item.icon}
-              <div className="flex items-center justify-center gap-2">
-                <span className={`text-3xl font-bold ${item.color}`}>{item.value}</span>
-                {item.trend}
+                <span
+                  className={`text-xs font-bold px-2 py-1 rounded-full ${
+                    stat.changePositive
+                      ? "bg-success/10 text-success"
+                      : "bg-destructive/10 text-destructive"
+                  }`}
+                >
+                  {stat.change}
+                </span>
               </div>
-              <div className="text-base text-gray-500 dark:text-gray-200">{item.label}</div>
-            </Card>
+              <p className="text-xs text-muted-foreground font-semibold mb-1">
+                {stat.label}
+              </p>
+              <p className="text-2xl sm:text-3xl font-black text-foreground">
+                {stat.value}
+              </p>
+            </motion.div>
+          ))}
+        </div>
+
+        {/* Charts Grid */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 sm:gap-8">
+          {/* XP Progress Chart */}
+          <motion.div
+            className="bg-card rounded-2xl p-5 sm:p-6 lg:p-8 border border-border shadow-lg"
+            initial={{ opacity: 0, x: -20 }}
+            animate={{ opacity: 1, x: 0 }}
+            transition={{ delay: 0.2 }}
+          >
+            <div className="flex items-center gap-3 mb-6">
+              <div className="w-10 h-10 bg-primary/10 rounded-xl flex items-center justify-center">
+                <TrendingUp className="w-5 h-5 text-primary" />
+              </div>
+              <div>
+                <h3 className="text-lg sm:text-xl font-black text-foreground">
+                  XP Progress
+                </h3>
+                <p className="text-xs text-muted-foreground">Last 7 days</p>
+              </div>
+            </div>
+            <ResponsiveContainer width="100%" height={300}>
+              <LineChart data={weeklyData}>
+                <CartesianGrid
+                  strokeDasharray="3 3"
+                  stroke="hsl(var(--border))"
+                />
+                <XAxis
+                  dataKey="name"
+                  stroke="hsl(var(--muted-foreground))"
+                  style={{ fontSize: "12px" }}
+                />
+                <YAxis
+                  stroke="hsl(var(--muted-foreground))"
+                  style={{ fontSize: "12px" }}
+                />
+                <Tooltip
+                  contentStyle={{
+                    backgroundColor: "hsl(var(--card))",
+                    border: "1px solid hsl(var(--border))",
+                    borderRadius: "12px",
+                    color: "hsl(var(--foreground))",
+                  }}
+                />
+                <Legend />
+                <Line
+                  type="monotone"
+                  dataKey="xp"
+                  stroke="hsl(var(--primary))"
+                  strokeWidth={3}
+                  dot={{ fill: "hsl(var(--primary))", r: 5 }}
+                  activeDot={{ r: 7 }}
+                />
+              </LineChart>
+            </ResponsiveContainer>
           </motion.div>
-        ))}
-      </motion.div>
-    </motion.div>
+
+          {/* Study Time Chart */}
+          <motion.div
+            className="bg-card rounded-2xl p-5 sm:p-6 lg:p-8 border border-border shadow-lg"
+            initial={{ opacity: 0, x: 20 }}
+            animate={{ opacity: 1, x: 0 }}
+            transition={{ delay: 0.3 }}
+          >
+            <div className="flex items-center gap-3 mb-6">
+              <div className="w-10 h-10 bg-accent/10 rounded-xl flex items-center justify-center">
+                <Clock className="w-5 h-5 text-accent" />
+              </div>
+              <div>
+                <h3 className="text-lg sm:text-xl font-black text-foreground">
+                  Study Time
+                </h3>
+                <p className="text-xs text-muted-foreground">Minutes per day</p>
+              </div>
+            </div>
+            <ResponsiveContainer width="100%" height={300}>
+              <BarChart data={weeklyData}>
+                <CartesianGrid
+                  strokeDasharray="3 3"
+                  stroke="hsl(var(--border))"
+                />
+                <XAxis
+                  dataKey="name"
+                  stroke="hsl(var(--muted-foreground))"
+                  style={{ fontSize: "12px" }}
+                />
+                <YAxis
+                  stroke="hsl(var(--muted-foreground))"
+                  style={{ fontSize: "12px" }}
+                />
+                <Tooltip
+                  contentStyle={{
+                    backgroundColor: "hsl(var(--card))",
+                    border: "1px solid hsl(var(--border))",
+                    borderRadius: "12px",
+                    color: "hsl(var(--foreground))",
+                  }}
+                />
+                <Legend />
+                <Bar
+                  dataKey="time"
+                  fill="hsl(var(--accent))"
+                  radius={[8, 8, 0, 0]}
+                />
+              </BarChart>
+            </ResponsiveContainer>
+          </motion.div>
+
+          {/* Course Distribution */}
+          <motion.div
+            className="bg-card rounded-2xl p-5 sm:p-6 lg:p-8 border border-border shadow-lg"
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.4 }}
+          >
+            <div className="flex items-center gap-3 mb-6">
+              <div className="w-10 h-10 bg-success/10 rounded-xl flex items-center justify-center">
+                <BarChart3 className="w-5 h-5 text-success" />
+              </div>
+              <div>
+                <h3 className="text-lg sm:text-xl font-black text-foreground">
+                  Course Progress
+                </h3>
+                <p className="text-xs text-muted-foreground">Completion rate</p>
+              </div>
+            </div>
+            <ResponsiveContainer width="100%" height={300}>
+              <PieChart>
+                <Pie
+                  data={courseProgress}
+                  cx="50%"
+                  cy="50%"
+                  labelLine={false}
+                  label={({ name, value }) => `${name}: ${value}%`}
+                  outerRadius={100}
+                  fill="#8884d8"
+                  dataKey="value"
+                >
+                  {courseProgress.map((entry, index) => (
+                    <Cell key={`cell-${index}`} fill={entry.color} />
+                  ))}
+                </Pie>
+                <Tooltip
+                  contentStyle={{
+                    backgroundColor: "hsl(var(--card))",
+                    border: "1px solid hsl(var(--border))",
+                    borderRadius: "12px",
+                    color: "hsl(var(--foreground))",
+                  }}
+                />
+              </PieChart>
+            </ResponsiveContainer>
+          </motion.div>
+
+          {/* Skills Radar */}
+          <motion.div
+            className="bg-card rounded-2xl p-5 sm:p-6 lg:p-8 border border-border shadow-lg"
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.5 }}
+          >
+            <div className="flex items-center gap-3 mb-6">
+              <div className="w-10 h-10 bg-warning/10 rounded-xl flex items-center justify-center">
+                <Activity className="w-5 h-5 text-warning" />
+              </div>
+              <div>
+                <h3 className="text-lg sm:text-xl font-black text-foreground">
+                  Skills Overview
+                </h3>
+                <p className="text-xs text-muted-foreground">
+                  Proficiency levels
+                </p>
+              </div>
+            </div>
+            <ResponsiveContainer width="100%" height={300}>
+              <RadarChart data={skillsData}>
+                <PolarGrid stroke="hsl(var(--border))" />
+                <PolarAngleAxis
+                  dataKey="subject"
+                  stroke="hsl(var(--muted-foreground))"
+                  style={{ fontSize: "12px" }}
+                />
+                <PolarRadiusAxis
+                  stroke="hsl(var(--muted-foreground))"
+                  style={{ fontSize: "10px" }}
+                />
+                <Radar
+                  name="Skills"
+                  dataKey="A"
+                  stroke="hsl(var(--primary))"
+                  fill="hsl(var(--primary))"
+                  fillOpacity={0.6}
+                />
+                <Tooltip
+                  contentStyle={{
+                    backgroundColor: "hsl(var(--card))",
+                    border: "1px solid hsl(var(--border))",
+                    borderRadius: "12px",
+                    color: "hsl(var(--foreground))",
+                  }}
+                />
+              </RadarChart>
+            </ResponsiveContainer>
+          </motion.div>
+        </div>
+
+        {/* Insights Card */}
+        <motion.div
+          className="bg-gradient-to-br from-primary/5 via-accent/5 to-primary/5 rounded-2xl p-6 sm:p-8 border border-border relative overflow-hidden"
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.6 }}
+        >
+          <div className="absolute top-0 right-0 w-48 h-48 sm:w-64 sm:h-64 bg-primary/5 rounded-full blur-3xl" />
+
+          <div className="relative z-10">
+            <div className="flex items-start gap-4">
+              <div className="w-12 h-12 bg-primary/10 rounded-xl flex items-center justify-center flex-shrink-0">
+                <Zap className="w-6 h-6 text-primary" />
+              </div>
+              <div className="flex-1">
+                <h3 className="text-xl sm:text-2xl font-black text-foreground mb-3">
+                  📊 Weekly Insights
+                </h3>
+                <div className="space-y-2 text-sm sm:text-base text-muted-foreground">
+                  <p>
+                    ✨ You've earned{" "}
+                    <span className="font-bold text-primary">280 XP</span> this
+                    week - your best yet!
+                  </p>
+                  <p>
+                    🔥 Your{" "}
+                    <span className="font-bold text-accent">7-day streak</span>{" "}
+                    is keeping you in the top 10%
+                  </p>
+                  <p>
+                    📈 Study time increased by{" "}
+                    <span className="font-bold text-success">15%</span> compared
+                    to last week
+                  </p>
+                  <p>
+                    🎯 You're on track to complete{" "}
+                    <span className="font-bold text-warning">3 courses</span>{" "}
+                    this month
+                  </p>
+                </div>
+              </div>
+            </div>
+          </div>
+        </motion.div>
+      </div>
+    </div>
   );
 };
 

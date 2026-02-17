@@ -5,7 +5,7 @@ import {
   BookOpen,
   ShieldCheck,
   ChevronDown,
-  Sparkles,
+  GraduationCap,
   Moon,
   Sun,
   Users,
@@ -565,7 +565,7 @@ const HomePage = () => {
             {/* Logo Section */}
             <div className="flex items-center space-x-2 sm:space-x-4 flex-shrink-0">
               <div className="w-10 h-10 sm:w-14 sm:h-14 bg-gradient-hero rounded-xl sm:rounded-2xl flex items-center justify-center shadow-md hover:shadow-lg transition-shadow duration-300">
-                <Sparkles className="text-white" size={18} />
+                <GraduationCap className="text-white" size={26} />
               </div>
               <div className="block">
                 <span className="text-xl sm:text-3xl font-black gradient-text">
@@ -824,7 +824,7 @@ const HomePage = () => {
         <div className="w-full max-w-7xl mx-auto px-6 text-center">
           <div className="flex items-center justify-center gap-4 mb-6">
             <div className="w-10 h-10 bg-gradient-primary rounded-2xl flex items-center justify-center">
-              <Sparkles className="text-white" size={16} />
+              <GraduationCap className="text-white" size={20} />
             </div>
             <span className="font-black text-2xl gradient-text-primary">
               EduSmart

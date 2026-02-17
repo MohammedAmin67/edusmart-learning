@@ -8,641 +8,607 @@ export const userData = {
   totalXP: 2850,
   xpToNextLevel: 300,
   currentStreak: 7,
-  coursesStarted: 5,          
-  coursesCompleted: 3,         
+  bestStreak: 14,
+  coursesStarted: 6,
+  coursesCompleted: 3,
+  joinedDate: "2024-01-15",
   avatar: {
     level: 12,
-    accessories: ["graduation_cap", "book", "star_badge", "wizard_hat", "magic_staff"],
-    unlocked: ["basic_outfit", "smart_glasses", "trophy", "gold_medal"]
+    accessories: [
+      "graduation_cap",
+      "book",
+      "star_badge",
+      "wizard_hat",
+      "magic_staff",
+    ],
+    unlocked: ["basic_outfit", "smart_glasses", "trophy", "gold_medal"],
+    url: null, // Can be set to user's avatar URL
   },
   stats: {
     totalLessonsCompleted: 45,
-    totalTimeSpent: 1250,
+    totalTimeSpent: 1250, // in minutes
     averageAccuracy: 87,
-    coursesCompleted: 3
-  }
+    coursesCompleted: 3,
+    perfectScores: 8,
+    currentLevel: 12,
+    rank: "Pro",
+  },
+  preferences: {
+    theme: "dark",
+    notifications: true,
+    emailUpdates: false,
+    studyReminders: true,
+  },
 };
 
+// =====================================================
+// COURSES DATA
+// =====================================================
 export const courses = [
   {
     id: 1,
     title: "JavaScript Fundamentals",
-    description: "Master the basics of modern JavaScript programming.",
+    description:
+      "Master the basics of modern JavaScript programming with hands-on projects and real-world examples.",
     progress: 75,
     totalLessons: 20,
     completedLessons: 15,
-    estimatedTime: 40,
+    estimatedTime: 40, // hours
+    duration: "40 hours",
     difficulty: "Beginner",
     category: "Programming",
-    color: "bg-blue-500"
+    color: "bg-blue-500",
+    thumbnail: null,
+    instructor: "John Doe",
+    rating: 4.8,
+    studentsEnrolled: 12500,
+    lastAccessed: "2025-02-10",
+    startedDate: "2024-12-01",
+    skills: [
+      "Variables",
+      "Functions",
+      "ES6+",
+      "Async/Await",
+      "DOM Manipulation",
+    ],
+    lessons: [
+      {
+        id: 1,
+        title: "Variables and Data Types",
+        duration: 15,
+        completed: true,
+      },
+      { id: 2, title: "Functions and Scope", duration: 20, completed: true },
+      { id: 3, title: "Arrays and Objects", duration: 18, completed: true },
+      { id: 4, title: "ES6 Features", duration: 22, completed: false },
+      { id: 5, title: "Async Programming", duration: 25, completed: false },
+    ],
   },
   {
     id: 2,
     title: "React Development",
-    description: "Build beautiful web apps with React.",
+    description:
+      "Build beautiful, interactive web applications with React and modern JavaScript.",
     progress: 45,
     totalLessons: 25,
     completedLessons: 11,
     estimatedTime: 60,
+    duration: "60 hours",
     difficulty: "Intermediate",
     category: "Web Development",
-    color: "bg-purple-500"
+    color: "bg-purple-500",
+    thumbnail: null,
+    instructor: "Jane Smith",
+    rating: 4.9,
+    studentsEnrolled: 9800,
+    lastAccessed: "2025-02-12",
+    startedDate: "2025-01-05",
+    skills: [
+      "Components",
+      "Hooks",
+      "State Management",
+      "React Router",
+      "Context API",
+    ],
+    lessons: [
+      { id: 1, title: "Intro to React", duration: 18, completed: true },
+      { id: 2, title: "JSX and Props", duration: 20, completed: true },
+      { id: 3, title: "State and Lifecycle", duration: 22, completed: false },
+    ],
   },
   {
     id: 3,
     title: "Data Structures & Algorithms",
-    description: "Learn efficient problem-solving and coding techniques.",
+    description:
+      "Learn efficient problem-solving techniques and ace coding interviews.",
     progress: 20,
     totalLessons: 30,
     completedLessons: 6,
     estimatedTime: 80,
+    duration: "80 hours",
     difficulty: "Advanced",
     category: "Computer Science",
-    color: "bg-green-500"
+    color: "bg-green-500",
+    thumbnail: null,
+    instructor: "Dr. Alan Turing",
+    rating: 4.7,
+    studentsEnrolled: 7500,
+    lastAccessed: "2025-02-08",
+    startedDate: "2025-01-20",
+    skills: ["Big O", "Arrays", "Trees", "Graphs", "Dynamic Programming"],
+    lessons: [
+      { id: 1, title: "Algorithm Basics", duration: 22, completed: true },
+      { id: 2, title: "Arrays and Strings", duration: 25, completed: false },
+    ],
   },
   {
     id: 4,
     title: "Python for Beginners",
-    description: "Start your Python journey with practical exercises.",
+    description:
+      "Start your Python journey with practical exercises and real projects.",
     progress: 0,
     totalLessons: 15,
     completedLessons: 0,
     estimatedTime: 35,
+    duration: "35 hours",
     difficulty: "Beginner",
     category: "Programming",
-    color: "bg-yellow-500"
+    color: "bg-yellow-500",
+    thumbnail: null,
+    instructor: "Sarah Connor",
+    rating: 4.6,
+    studentsEnrolled: 15000,
+    lastAccessed: null,
+    startedDate: null,
+    skills: ["Syntax", "Data Types", "Functions", "OOP", "File I/O"],
+    lessons: [],
   },
   {
     id: 5,
     title: "UI/UX Design Basics",
-    description: "Fundamentals of user-centric design and prototyping.",
+    description:
+      "Fundamentals of user-centric design and prototyping with Figma.",
     progress: 0,
     totalLessons: 12,
     completedLessons: 0,
     estimatedTime: 28,
+    duration: "28 hours",
     difficulty: "Beginner",
     category: "Design",
-    color: "bg-pink-500"
+    color: "bg-pink-500",
+    thumbnail: null,
+    instructor: "Emily Brown",
+    rating: 4.8,
+    studentsEnrolled: 8200,
+    lastAccessed: null,
+    startedDate: null,
+    skills: [
+      "Wireframing",
+      "Prototyping",
+      "Color Theory",
+      "Typography",
+      "User Research",
+    ],
+    lessons: [],
   },
   {
     id: 6,
     title: "Machine Learning 101",
-    description: "Introduction to concepts & tools in ML.",
+    description:
+      "Introduction to ML concepts, tools, and practical applications.",
     progress: 0,
     totalLessons: 18,
     completedLessons: 0,
     estimatedTime: 45,
+    duration: "45 hours",
     difficulty: "Intermediate",
     category: "Data Science",
-    color: "bg-indigo-500"
-  }
+    color: "bg-indigo-500",
+    thumbnail: null,
+    instructor: "Dr. Andrew Ng",
+    rating: 4.9,
+    studentsEnrolled: 25000,
+    lastAccessed: null,
+    startedDate: null,
+    skills: ["Python", "NumPy", "Pandas", "Scikit-learn", "Neural Networks"],
+    lessons: [],
+  },
 ];
 
-
-
-// -- Each course has its own lesson(s) and quiz(zes) --
-export const lessonsByCourse = {
-  1: [
-    {
-      id: 1,
-      courseId: 1,
-      title: "Variables and Data Types",
-      description: "Understanding how to store and manipulate data in JavaScript.",
-      type: "video",
-      duration: 15,
-      content: {
-        videoUrl: "js-variables.mp4",
-        transcript: "Welcome to JavaScript variables and data types. We'll cover var, let, const, and the core data types you will use most often. Try to follow along with the code examples and feel free to pause and rewind.",
-        keyPoints: [
-          "Variables store data values",
-          "JavaScript has dynamic typing",
-          "Common data types: string, number, boolean, object",
-          "Use let/const for modern JS",
-          "Variable names must start with a letter, $, or _"
-        ]
-      },
-      completed: false,
-      xpReward: 50,
-      questions: [
-        {
-          id: 101,
-          type: "multipleChoice",
-          question: "Which is the correct way to declare a variable in JavaScript?",
-          options: [
-            "var myVariable = 5;",
-            "variable myVariable = 5;",
-            "v myVariable = 5;",
-            "declare myVariable = 5;"
-          ],
-          correctAnswer: 0,
-          explanation: "The 'var' keyword is used to declare variables in JavaScript.",
-          xpReward: 20
-        },
-        {
-          id: 102,
-          type: "dragAndDrop",
-          question: "Drag the correct data type to match each value:",
-          items: [
-            { id: 1, content: "42", type: "draggable" },
-            { id: 2, content: "true", type: "draggable" },
-            { id: 3, content: "'Hello'", type: "draggable" },
-            { id: 4, content: "{}", type: "draggable" }
-          ],
-          dropZones: [
-            { id: 1, label: "Number", correctItemId: 1 },
-            { id: 2, label: "Boolean", correctItemId: 2 },
-            { id: 3, label: "String", correctItemId: 3 },
-            { id: 4, label: "Object", correctItemId: 4 }
-          ],
-          xpReward: 20
-        },
-        {
-          id: 103,
-          type: "fillInBlanks",
-          question: "Complete the JavaScript variable declaration:",
-          template: "_____ myName = '____';",
-          blanks: [
-            { id: 1, correctAnswer: "let", position: 0 },
-            { id: 2, correctAnswer: "Alex", position: 1 }
-          ],
-          xpReward: 10
-        }
-      ]
-    }
-  ],
-  2: [
-    {
-      id: 2,
-      courseId: 2,
-      title: "Intro to React",
-      description: "Learn the basics of React, components, and JSX.",
-      type: "video",
-      duration: 18,
-      content: {
-        videoUrl: "react-intro.mp4",
-        transcript: "This lesson covers what React is, how components work, and how to use JSX to build UI.",
-        keyPoints: [
-          "React is a JavaScript library for building UIs",
-          "Components let you split UI into independent pieces",
-          "JSX lets you write HTML in JS",
-          "Props are how you pass data",
-          "State is used for interactivity"
-        ]
-      },
-      completed: false,
-      xpReward: 60,
-      questions: [
-        {
-          id: 201,
-          type: "multipleChoice",
-          question: "What does JSX stand for in React?",
-          options: [
-            "JavaScript XML",
-            "Java Syntax Extension",
-            "JavaScript Extension",
-            "Java Source X"
-          ],
-          correctAnswer: 0,
-          explanation: "JSX stands for JavaScript XML.",
-          xpReward: 20
-        },
-        {
-          id: 202,
-          type: "dragAndDrop",
-          question: "Match the React concept to the definition:",
-          items: [
-            { id: 1, content: "Component", type: "draggable" },
-            { id: 2, content: "Props", type: "draggable" },
-            { id: 3, content: "State", type: "draggable" }
-          ],
-          dropZones: [
-            { id: 1, label: "Used for interactivity", correctItemId: 3 },
-            { id: 2, label: "Reusable UI piece", correctItemId: 1 },
-            { id: 3, label: "Data passed to component", correctItemId: 2 }
-          ],
-          xpReward: 20
-        },
-        {
-          id: 203,
-          type: "fillInBlanks",
-          question: "Fill in the blank: React components return ____.",
-          template: "React components return ____.",
-          blanks: [
-            { id: 1, correctAnswer: "JSX", position: 0 }
-          ],
-          xpReward: 10
-        }
-      ]
-    }
-  ],
-  3: [
-    {
-      id: 3,
-      courseId: 3,
-      title: "Algorithm Basics",
-      description: "The foundations of algorithms and Big O Notation.",
-      type: "video",
-      duration: 22,
-      content: {
-        videoUrl: "algorithms-basics.mp4",
-        transcript: "In this lesson, we will explore what algorithms are and how we measure their efficiency using Big O notation.",
-        keyPoints: [
-          "Algorithm = step-by-step procedure",
-          "Efficiency matters",
-          "Big O = performance measurement",
-          "Common structures: arrays, stacks, queues"
-        ]
-      },
-      completed: false,
-      xpReward: 70,
-      questions: [
-        {
-          id: 301,
-          type: "multipleChoice",
-          question: "What does Big O Notation describe?",
-          options: [
-            "Algorithm performance",
-            "Variable scope",
-            "UI layout",
-            "Programming errors"
-          ],
-          correctAnswer: 0,
-          explanation: "Big O notation describes the performance (efficiency) of an algorithm.",
-          xpReward: 20
-        },
-        {
-          id: 302,
-          type: "dragAndDrop",
-          question: "Match the data structure to its property:",
-          items: [
-            { id: 1, content: "Stack", type: "draggable" },
-            { id: 2, content: "Queue", type: "draggable" }
-          ],
-          dropZones: [
-            { id: 1, label: "First-In-First-Out", correctItemId: 2 },
-            { id: 2, label: "Last-In-First-Out", correctItemId: 1 }
-          ],
-          xpReward: 20
-        },
-        {
-          id: 303,
-          type: "fillInBlanks",
-          question: "Complete: An ____ is a step-by-step solution.",
-          template: "An ____ is a step-by-step solution.",
-          blanks: [
-            { id: 1, correctAnswer: "algorithm", position: 0 }
-          ],
-          xpReward: 10
-        }
-      ]
-    }
-  ],
-  4: [
-    {
-      id: 4,
-      courseId: 4,
-      title: "Getting Started with Python",
-      description: "Begin your journey with Python variables and syntax.",
-      type: "video",
-      duration: 14,
-      content: {
-        videoUrl: "python-intro.mp4",
-        transcript: "This lesson introduces Python syntax, variables, and how to run your first Python program.",
-        keyPoints: [
-          "Python uses indentation",
-          "Variables are dynamically typed",
-          "Print with print()",
-          "No semicolons needed"
-        ]
-      },
-      completed: false,
-      xpReward: 45,
-      questions: [
-        {
-          id: 401,
-          type: "multipleChoice",
-          question: "How do you print text in Python?",
-          options: [
-            "print('Hello')",
-            "console.log('Hello')",
-            "echo 'Hello';",
-            "System.out.println('Hello')"
-          ],
-          correctAnswer: 0,
-          explanation: "Use print('Hello') to print in Python.",
-          xpReward: 15
-        },
-        {
-          id: 402,
-          type: "dragAndDrop",
-          question: "Match the Python concept to its description:",
-          items: [
-            { id: 1, content: "Indentation", type: "draggable" },
-            { id: 2, content: "Dynamic typing", type: "draggable" }
-          ],
-          dropZones: [
-            { id: 1, label: "No need to declare variable types", correctItemId: 2 },
-            { id: 2, label: "Controls code structure", correctItemId: 1 }
-          ],
-          xpReward: 15
-        },
-        {
-          id: 403,
-          type: "fillInBlanks",
-          question: "Fill: print(____)",
-          template: "print(____)",
-          blanks: [
-            { id: 1, correctAnswer: "'Hello'", position: 0 }
-          ],
-          xpReward: 5
-        }
-      ]
-    }
-  ],
-  5: [
-    {
-      id: 5,
-      courseId: 5,
-      title: "What is UI/UX?",
-      description: "Understand the difference between UI and UX design.",
-      type: "video",
-      duration: 11,
-      content: {
-        videoUrl: "uiux-intro.mp4",
-        transcript: "UI is about how things look. UX is about how things work for the user. Both are essential for good design.",
-        keyPoints: [
-          "UI = User Interface (visuals)",
-          "UX = User Experience (interaction)",
-          "Both needed for great products"
-        ]
-      },
-      completed: false,
-      xpReward: 40,
-      questions: [
-        {
-          id: 501,
-          type: "multipleChoice",
-          question: "What does UI stand for?",
-          options: [
-            "User Interface",
-            "Universal Input",
-            "User Internet",
-            "Unified Interaction"
-          ],
-          correctAnswer: 0,
-          explanation: "UI stands for User Interface.",
-          xpReward: 10
-        },
-        {
-          id: 502,
-          type: "dragAndDrop",
-          question: "Match the design area to what it focuses on:",
-          items: [
-            { id: 1, content: "UI", type: "draggable" },
-            { id: 2, content: "UX", type: "draggable" }
-          ],
-          dropZones: [
-            { id: 1, label: "Look & feel", correctItemId: 1 },
-            { id: 2, label: "Ease of use", correctItemId: 2 }
-          ],
-          xpReward: 10
-        },
-        {
-          id: 503,
-          type: "fillInBlanks",
-          question: "Fill: ____ is about how things work for the user.",
-          template: "____ is about how things work for the user.",
-          blanks: [
-            { id: 1, correctAnswer: "UX", position: 0 }
-          ],
-          xpReward: 5
-        }
-      ]
-    }
-  ],
-  6: [
-    {
-      id: 6,
-      courseId: 6,
-      title: "Machine Learning Overview",
-      description: "An introduction to the field and its terminology.",
-      type: "video",
-      duration: 20,
-      content: {
-        videoUrl: "ml-overview.mp4",
-        transcript: "Machine learning is a field of AI that lets systems learn patterns from data. This lesson covers ML basics and types.",
-        keyPoints: [
-          "ML is a type of AI",
-          "Learns from data",
-          "Supervised vs unsupervised learning",
-          "Requires lots of data"
-        ]
-      },
-      completed: false,
-      xpReward: 55,
-      questions: [
-        {
-          id: 601,
-          type: "multipleChoice",
-          question: "Machine learning is a subfield of what?",
-          options: [
-            "Artificial Intelligence",
-            "Web Development",
-            "UI Design",
-            "Networking"
-          ],
-          correctAnswer: 0,
-          explanation: "ML is a subfield of AI (Artificial Intelligence).",
-          xpReward: 15
-        },
-        {
-          id: 602,
-          type: "dragAndDrop",
-          question: "Match the ML type to its description:",
-          items: [
-            { id: 1, content: "Supervised", type: "draggable" },
-            { id: 2, content: "Unsupervised", type: "draggable" }
-          ],
-          dropZones: [
-            { id: 1, label: "Learns from labeled data", correctItemId: 1 },
-            { id: 2, label: "Finds patterns in unlabeled data", correctItemId: 2 }
-          ],
-          xpReward: 15
-        },
-        {
-          id: 603,
-          type: "fillInBlanks",
-          question: "Fill: ML stands for ____.",
-          template: "ML stands for ____.",
-          blanks: [
-            { id: 1, correctAnswer: "Machine Learning", position: 0 }
-          ],
-          xpReward: 5
-        }
-      ]
-    }
-  ]
-};
-
-export const currentLesson = {
-  id: 1,
-  title: 'Variables and Data Types',
-  description: 'Understanding how to store and manipulate data in JavaScript.',
-  type: 'video',
-  content: {
-    videoUrl: 'js-variables.mp4'
+// =====================================================
+// ANALYTICS DATA
+// =====================================================
+export const analyticsData = {
+  // Weekly data (last 7 days)
+  week: {
+    labels: ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"],
+    xpData: [120, 180, 150, 220, 190, 280, 160],
+    lessonsData: [3, 5, 4, 6, 5, 8, 4],
+    timeData: [45, 68, 52, 85, 71, 120, 60], // minutes
+    accuracyData: [85, 88, 82, 90, 87, 92, 85],
+    totalXP: 1300,
+    totalTime: 501, // minutes
+    totalLessons: 35,
+    avgAccuracy: 87,
+    bestDay: "Saturday",
+    bestXP: 280,
+    improvement: 15, // percentage
   },
-  courseId: 1,
-  duration: 15,
-  questions: [/* ... */]
+
+  // Monthly data (last 4 weeks)
+  month: {
+    labels: ["Week 1", "Week 2", "Week 3", "Week 4"],
+    xpData: [850, 920, 1050, 980],
+    lessonsData: [18, 22, 25, 21],
+    timeData: [320, 385, 425, 380], // minutes
+    accuracyData: [84, 86, 89, 85],
+    totalXP: 3800,
+    totalTime: 1510,
+    totalLessons: 86,
+    avgAccuracy: 85,
+    bestDay: "Week 3",
+    bestXP: 1050,
+    improvement: 22,
+  },
+
+  // Yearly data (last 12 months)
+  year: {
+    labels: [
+      "Jan",
+      "Feb",
+      "Mar",
+      "Apr",
+      "May",
+      "Jun",
+      "Jul",
+      "Aug",
+      "Sep",
+      "Oct",
+      "Nov",
+      "Dec",
+    ],
+    xpData: [
+      2800, 3200, 3500, 3800, 4200, 4500, 4800, 5100, 5400, 5200, 4900, 5300,
+    ],
+    lessonsData: [65, 75, 82, 88, 95, 102, 108, 115, 120, 118, 110, 125],
+    timeData: [
+      980, 1120, 1240, 1350, 1480, 1600, 1720, 1850, 1950, 1880, 1780, 1920,
+    ],
+    accuracyData: [82, 84, 85, 87, 88, 89, 90, 91, 92, 90, 88, 89],
+    totalXP: 52700,
+    totalTime: 17870,
+    totalLessons: 1203,
+    avgAccuracy: 89,
+    bestDay: "September",
+    bestXP: 5400,
+    improvement: 38,
+  },
+
+  // Course-specific performance
+  coursePerformance: [
+    {
+      name: "JavaScript",
+      progress: 85,
+      timeSpent: 450,
+      accuracy: 89,
+      color: "hsl(var(--primary))",
+    },
+    {
+      name: "React",
+      progress: 65,
+      timeSpent: 380,
+      accuracy: 85,
+      color: "hsl(var(--accent))",
+    },
+    {
+      name: "Node.js",
+      progress: 45,
+      timeSpent: 220,
+      accuracy: 82,
+      color: "hsl(var(--success))",
+    },
+    {
+      name: "TypeScript",
+      progress: 30,
+      timeSpent: 150,
+      accuracy: 78,
+      color: "hsl(var(--warning))",
+    },
+  ],
+
+  // Skills radar data
+  skillsData: [
+    { subject: "Frontend", value: 85, fullMark: 100 },
+    { subject: "Backend", value: 70, fullMark: 100 },
+    { subject: "Database", value: 60, fullMark: 100 },
+    { subject: "DevOps", value: 45, fullMark: 100 },
+    { subject: "Testing", value: 75, fullMark: 100 },
+    { subject: "Design", value: 55, fullMark: 100 },
+  ],
+
+  // Activity heatmap (for future use)
+  activityHeatmap: [
+    { date: "2025-02-01", value: 3 },
+    { date: "2025-02-02", value: 5 },
+    { date: "2025-02-03", value: 2 },
+    // ... more dates
+  ],
 };
 
+// =====================================================
+// DAILY ACTIVITY
+// =====================================================
 export const dailyActivity = {
   todayXP: 35,
   todayLessons: 2,
   todayMinutes: 25,
   streak: 7,
   weeklyGoal: 300,
-  weeklyProgress: 180
+  weeklyProgress: 180,
+  todayGoal: 50,
+  todayGoalProgress: 35,
 };
 
-export const analyticsData = {
-  weeklyChart: [
-    { day: 'Day 1', xp: 38, minutes: 28 },
-    { day: 'Day 2', xp: 72, minutes: 51 },
-    { day: 'Day 3', xp: 41, minutes: 33 },
-    { day: 'Day 4', xp: 109, minutes: 75 },
-    { day: 'Day 5', xp: 57, minutes: 44 },
-    { day: 'Day 6', xp: 131, minutes: 95 },
-    { day: 'Day 7', xp: 149, minutes: 113 },
-    { day: 'Day 8', xp: 63, minutes: 49 },
-    { day: 'Day 9', xp: 94, minutes: 78 },
-    { day: 'Day 10', xp: 80, minutes: 55 },
-    { day: 'Day 11', xp: 43, minutes: 24 },
-    { day: 'Day 12', xp: 128, minutes: 107 },
-    { day: 'Day 13', xp: 58, minutes: 32 },
-    { day: 'Day 14', xp: 87, minutes: 70 },
-    { day: 'Day 15', xp: 70, minutes: 41 },
-    { day: 'Day 16', xp: 132, minutes: 120 },
-    { day: 'Day 17', xp: 48, minutes: 38 },
-    { day: 'Day 18', xp: 110, minutes: 85 },
-    { day: 'Day 19', xp: 65, minutes: 39 },
-    { day: 'Day 20', xp: 124, minutes: 99 },
-    { day: 'Day 21', xp: 97, minutes: 61 },
-    { day: 'Day 22', xp: 74, minutes: 53 },
-    { day: 'Day 23', xp: 102, minutes: 91 },
-    { day: 'Day 24', xp: 57, minutes: 34 },
-    { day: 'Day 25', xp: 131, minutes: 102 },
-    { day: 'Day 26', xp: 62, minutes: 27 },
-    { day: 'Day 27', xp: 120, minutes: 81 },
-    { day: 'Day 28', xp: 53, minutes: 21 },
-    { day: 'Day 29', xp: 111, minutes: 97 },
-    { day: 'Day 30', xp: 85, minutes: 62 }
-  ],
-  subjectPerformance: [
-    {
-      subject: "JavaScript",
-      accuracy: 87,
-      timeSpent: 350,
-      lessonsCompleted: 12
-    },
-    {
-      subject: "React",
-      accuracy: 92,
-      timeSpent: 430,
-      lessonsCompleted: 15
-    },
-    {
-      subject: "Python",
-      accuracy: 78,
-      timeSpent: 220,
-      lessonsCompleted: 8
-    }
-  ],
-  monthlyStats: {
-    totalMinutes: 1890,
-    totalLessons: 40,
-    averageAccuracy: 86,
-    bestStreak: 7
-  }
-};
-
-
+// =====================================================
+// ACHIEVEMENTS
+// =====================================================
 export const achievements = [
   {
     id: 1,
-    name: 'First Steps',
-    description: 'Completed your first lesson!',
-    icon: '🎉',
+    name: "First Steps",
+    description: "Completed your first lesson!",
+    icon: "🎉",
     xpReward: 20,
-    rarity: 'common',
-    unlockedDate: '2025-08-22T14:30:00Z'
+    rarity: "common",
+    unlocked: true,
+    unlockedDate: "2025-01-22T14:30:00Z",
+    category: "Milestones",
   },
   {
     id: 2,
-    name: 'Quiz Master',
-    description: 'Scored 100% on a quiz.',
-    icon: '🏆',
+    name: "Quiz Master",
+    description: "Scored 100% on a quiz.",
+    icon: "🏆",
     xpReward: 50,
-    rarity: 'rare',
-    unlockedDate: '2025-08-23T11:10:00Z'
+    rarity: "rare",
+    unlocked: true,
+    unlockedDate: "2025-01-23T11:10:00Z",
+    category: "Excellence",
   },
   {
     id: 3,
-    name: 'Streaker',
-    description: 'Maintain a 7-day learning streak.',
-    icon: '🔥',
+    name: "Streaker",
+    description: "Maintain a 7-day learning streak.",
+    icon: "🔥",
     xpReward: 70,
-    rarity: 'epic',
-    unlockedDate: null,
-    progress: 5, // in-progress, current streak 5/7
-    target: 7
+    rarity: "epic",
+    unlocked: true,
+    unlockedDate: "2025-02-10T09:00:00Z",
+    progress: 7,
+    target: 7,
+    category: "Consistency",
   },
   {
     id: 4,
-    name: 'Perfectionist',
-    description: 'Achieve 90%+ accuracy in lessons for a week.',
-    icon: '🌟',
+    name: "Perfectionist",
+    description: "Achieve 90%+ accuracy in 10 lessons.",
+    icon: "🌟",
     xpReward: 100,
-    rarity: 'legendary',
-    unlockedDate: null
+    rarity: "legendary",
+    unlocked: false,
+    progress: 6,
+    target: 10,
+    category: "Excellence",
   },
   {
     id: 5,
-    name: 'Explorer',
-    description: 'Complete 5 different courses.',
-    icon: '🗺️',
+    name: "Explorer",
+    description: "Start 5 different courses.",
+    icon: "🗺️",
     xpReward: 60,
-    rarity: 'epic',
-    unlockedDate: '2025-08-25T17:20:00Z'
+    rarity: "epic",
+    unlocked: true,
+    unlockedDate: "2025-02-05T17:20:00Z",
+    category: "Exploration",
   },
   {
     id: 6,
-    name: 'Night Owl',
-    description: 'Study after midnight 3 days in a row.',
-    icon: '🦉',
+    name: "Night Owl",
+    description: "Study after midnight 3 days in a row.",
+    icon: "🦉",
     xpReward: 40,
-    rarity: 'rare',
-    unlockedDate: null,
+    rarity: "rare",
+    unlocked: false,
     progress: 2,
-    target: 3
+    target: 3,
+    category: "Special",
   },
   {
     id: 7,
-    name: 'Speed Learner',
-    description: 'Finish a lesson in under 10 minutes.',
-    icon: '⚡',
+    name: "Speed Learner",
+    description: "Finish a lesson in under 10 minutes.",
+    icon: "⚡",
     xpReward: 25,
-    rarity: 'common',
-    unlockedDate: '2025-08-24T09:45:00Z'
+    rarity: "common",
+    unlocked: true,
+    unlockedDate: "2025-01-24T09:45:00Z",
+    category: "Speed",
   },
   {
     id: 8,
-    name: 'Social Butterfly',
-    description: 'Invite 3 friends to join EduSmart.',
-    icon: '🦋',
+    name: "Social Butterfly",
+    description: "Invite 3 friends to join EduSmart.",
+    icon: "🦋",
     xpReward: 30,
-    rarity: 'rare',
-    unlockedDate: null
-  }
+    rarity: "rare",
+    unlocked: false,
+    progress: 1,
+    target: 3,
+    category: "Social",
+  },
+  {
+    id: 9,
+    name: "Century Club",
+    description: "Complete 100 lessons.",
+    icon: "💯",
+    xpReward: 150,
+    rarity: "legendary",
+    unlocked: false,
+    progress: 45,
+    target: 100,
+    category: "Milestones",
+  },
+  {
+    id: 10,
+    name: "Master Coder",
+    description: "Complete all JavaScript courses.",
+    icon: "👨‍💻",
+    xpReward: 200,
+    rarity: "legendary",
+    unlocked: false,
+    progress: 1,
+    target: 3,
+    category: "Mastery",
+  },
 ];
+
+// =====================================================
+// LESSONS DATA (Organized by Course)
+// =====================================================
+export const lessonsByCourse = {
+  1: [
+    {
+      id: 1,
+      courseId: 1,
+      title: "Variables and Data Types",
+      description:
+        "Understanding how to store and manipulate data in JavaScript.",
+      type: "video",
+      duration: 15,
+      content: {
+        videoUrl: "js-variables.mp4",
+        transcript: "Welcome to JavaScript variables and data types...",
+        keyPoints: [
+          "Variables store data values",
+          "JavaScript has dynamic typing",
+          "Common data types: string, number, boolean, object",
+          "Use let/const for modern JS",
+        ],
+      },
+      completed: true,
+      xpReward: 50,
+    },
+  ],
+  // ... other courses
+};
+
+// =====================================================
+// LEADERBOARD DATA (for future use)
+// =====================================================
+export const leaderboardData = [
+  { rank: 1, name: "Sarah J.", xp: 15420, avatar: null, streak: 45 },
+  { rank: 2, name: "Mike T.", xp: 14980, avatar: null, streak: 38 },
+  { rank: 3, name: "Emily R.", xp: 13850, avatar: null, streak: 32 },
+  {
+    rank: 4,
+    name: "Mohammed A.",
+    xp: 2850,
+    avatar: null,
+    streak: 7,
+    isCurrentUser: true,
+  },
+  { rank: 5, name: "John D.", xp: 2640, avatar: null, streak: 12 },
+];
+
+// =====================================================
+// NOTIFICATIONS DATA (for future use)
+// =====================================================
+export const notifications = [
+  {
+    id: 1,
+    type: "achievement",
+    title: "New Achievement Unlocked!",
+    message: 'You earned the "Streaker" badge for maintaining a 7-day streak!',
+    timestamp: "2025-02-14T10:30:00Z",
+    read: false,
+    icon: "🔥",
+  },
+  {
+    id: 2,
+    type: "course",
+    title: "Course Update",
+    message: 'New lessons added to "JavaScript Fundamentals"',
+    timestamp: "2025-02-13T15:20:00Z",
+    read: false,
+    icon: "📚",
+  },
+  {
+    id: 3,
+    type: "reminder",
+    title: "Daily Goal",
+    message: "You're 15 XP away from reaching your daily goal!",
+    timestamp: "2025-02-14T08:00:00Z",
+    read: true,
+    icon: "🎯",
+  },
+];
+
+// =====================================================
+// HELPER FUNCTIONS
+// =====================================================
+
+// Get courses in progress
+export const getCoursesInProgress = () => {
+  return courses.filter(
+    (course) => course.progress > 0 && course.progress < 100,
+  );
+};
+
+// Get completed courses
+export const getCompletedCourses = () => {
+  return courses.filter((course) => course.progress === 100);
+};
+
+// Get not started courses
+export const getNotStartedCourses = () => {
+  return courses.filter((course) => course.progress === 0);
+};
+
+// Get course by ID
+export const getCourseById = (id) => {
+  return courses.find((course) => course.id === id);
+};
+
+// Get unlocked achievements
+export const getUnlockedAchievements = () => {
+  return achievements.filter((achievement) => achievement.unlocked);
+};
+
+// Get locked achievements
+export const getLockedAchievements = () => {
+  return achievements.filter((achievement) => !achievement.unlocked);
+};
+
+// Calculate level progress
+export const getLevelProgress = () => {
+  return Math.round(((userData.totalXP % 300) / 300) * 100);
+};
+
+export default {
+  userData,
+  courses,
+  analyticsData,
+  dailyActivity,
+  achievements,
+  lessonsByCourse,
+  leaderboardData,
+  notifications,
+  // Helper functions
+  getCoursesInProgress,
+  getCompletedCourses,
+  getNotStartedCourses,
+  getCourseById,
+  getUnlockedAchievements,
+  getLockedAchievements,
+  getLevelProgress,
+};

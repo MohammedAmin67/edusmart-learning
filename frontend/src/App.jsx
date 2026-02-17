@@ -1,4 +1,10 @@
-import React, { useState, useEffect, createContext } from "react";
+import React, {
+  useState,
+  useEffect,
+  createContext,
+  useMemo,
+  useCallback,
+} from "react";
 import {
   Routes,
   Route,
@@ -8,8 +14,7 @@ import {
 } from "react-router-dom";
 import Header from "./components/layout/Header";
 import Sidebar from "./components/layout/Sidebar";
-import ProgressOverview from "./components/dashboard/ProgressOverview";
-import ContinueLearning from "./components/dashboard/ContinueLearning";
+import Dashboard from "./components/dashboard/Dashboard";
 import AnalyticsCharts from "./components/analytics/AnalyticsCharts";
 import LessonPlayer from "./components/learning/LessonPlayer";
 import QuizSystem from "./components/learning/QuizSystem";
@@ -42,7 +47,6 @@ function AppRoutes({
   const { user, setUser } = useUser();
   const location = useLocation();
 
-  // Animation wrapper for main dashboard area
   const AnimatedMain = ({ children }) => (
     <div className="w-full max-w-7xl mx-auto animate-fadeInUp">{children}</div>
   );
@@ -60,10 +64,10 @@ function AppRoutes({
     switch (activeTab) {
       case "dashboard":
         return (
-          <AnimatedMain>
-            <ProgressOverview />
-            <ContinueLearning setActiveTab={setActiveTab} />
-          </AnimatedMain>
+          <Dashboard
+            setActiveTab={setActiveTab}
+            setSelectedCourseId={setSelectedCourseId}
+          />
         );
       case "learning":
         if (!selectedCourseId) {
@@ -149,9 +153,10 @@ function AppRoutes({
         );
       default:
         return (
-          <AnimatedMain>
-            <ProgressOverview />
-          </AnimatedMain>
+          <Dashboard
+            setActiveTab={setActiveTab}
+            setSelectedCourseId={setSelectedCourseId}
+          />
         );
     }
   };
@@ -200,7 +205,7 @@ function AppRoutes({
         path="/dashboard/*"
         element={
           !!user ? (
-            <div className="min-h-screen bg-gradient-to-br from-secondary via-background to-muted dark:from-gray-900 dark:via-background dark:to-gray-950 transition-colors duration-300">
+            <div className="min-h-screen bg-background transition-colors duration-300">
               <div className="flex min-h-screen">
                 <Sidebar
                   activeTab={activeTab}
@@ -215,9 +220,7 @@ function AppRoutes({
                     setActiveTab={setActiveTab}
                     setSelectedCourseId={setSelectedCourseId}
                   />
-                  <main className="flex-1 w-full px-4 py-6 lg:px-8 lg:py-8 pt-20 lg:pt-24">
-                    {renderContent()}
-                  </main>
+                  <main className="flex-1 w-full">{renderContent()}</main>
                 </div>
               </div>
             </div>
@@ -271,10 +274,19 @@ function App() {
     }
   }, [darkMode]);
 
-  const toggleDarkMode = () => setDarkMode((d) => !d);
+  // Use useCallback to memoize toggleDarkMode function
+  const toggleDarkMode = useCallback(() => {
+    setDarkMode((d) => !d);
+  }, []);
+
+  // Memoize the context value to prevent unnecessary re-renders
+  const darkModeContextValue = useMemo(
+    () => ({ darkMode, setDarkMode, toggleDarkMode }),
+    [darkMode, toggleDarkMode],
+  );
 
   return (
-    <DarkModeContext.Provider value={{ darkMode, setDarkMode, toggleDarkMode }}>
+    <DarkModeContext.Provider value={darkModeContextValue}>
       <Toaster
         position="top-right"
         toastOptions={{

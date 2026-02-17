@@ -1,252 +1,264 @@
-import React from 'react';
-import { Award, Star, Flame, TrendingUp, Trophy, Clock, CheckCircle, User } from 'lucide-react';
-import { useNavigate } from 'react-router-dom';
-import Card from '../shared/Card';
-import ProgressBar from '../shared/ProgressBar';
-import Button from '../shared/Button';
-import { dailyActivity, analyticsData, achievements } from '../../data/mockData';
+import React from "react";
+import { motion } from "framer-motion";
+import {
+  TrendingUp,
+  Award,
+  Target,
+  Flame,
+  BookOpen,
+  Clock,
+  Star,
+  CheckCircle2,
+  ArrowRight,
+} from "lucide-react";
+import Avatar from "../shared/Avatar";
 import { useUser } from "../context/UserContext";
-import { motion } from 'framer-motion';
 
-const fadeInUp = (i = 0) => ({
-  initial: { opacity: 0, y: 32, scale: 0.99 },
-  animate: { opacity: 1, y: 0, scale: 1, transition: { delay: i * 0.14, duration: 0.7, type: 'spring' } }
-});
-
-const ProgressOverview = ({ setActiveTab }) => {
-  const { user } = useUser();
-  const navigate = useNavigate();
-
-  if (!user) {
-    return (
-      <motion.div
-        initial={{ opacity: 0, y: 16 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.5 }}
-        className="flex items-center justify-center min-h-[300px] text-gray-500 dark:text-gray-200"
-      >
-        Please log in to see your progress.
-      </motion.div>
-    );
-  }
-
-  const progressPercent = Math.min(
+// XP Bar uses SAME formula as Profile.jsx for consistency
+const getProgressPercent = (user) =>
+  Math.min(
     100,
     Math.round(
-      ((user.totalXP ?? 0) / ((user.totalXP ?? 0) + (user.xpToNextLevel ?? 1))) * 100
-    )
+      ((user?.totalXP ?? 0) /
+        ((user?.totalXP ?? 0) + (user?.xpToNextLevel ?? 1))) *
+        100,
+    ),
   );
 
-  const lockedAchievements = achievements.filter(
-    (a) => !a.unlockedDate && a.progress !== undefined && a.target
-  );
-  const nextAchievement =
-    lockedAchievements.length > 0
-      ? lockedAchievements.reduce((a, b) =>
-          (a.progress / a.target > b.progress / b.target ? a : b)
-        )
-      : null;
+const ProgressOverview = ({ onViewProfile }) => {
+  const { user } = useUser();
 
-  const handleViewProfile = () => {
-    navigate('/dashboard/profile');
-  };
+  if (!user) return null;
+
+  // Use the same calculation as Profile.jsx
+  const progressPercent = getProgressPercent(user);
+
+  const stats = [
+    { icon: BookOpen, label: "Lessons", value: "45", color: "text-primary" },
+    { icon: Award, label: "Courses", value: "3", color: "text-accent" },
+    { icon: Target, label: "Accuracy", value: "87%", color: "text-success" },
+    { icon: Flame, label: "Streak", value: "7d", color: "text-accent" },
+  ];
+
+  const quickStats = [
+    { icon: Clock, label: "1250 min total", value: "Study Time" },
+    { icon: Award, label: "4 achievements unlocked", value: "Achievements" },
+    { icon: BookOpen, label: "3 courses completed", value: "Courses" },
+    { icon: Flame, label: "Best streak: 7 days", value: "Streak" },
+  ];
 
   return (
-    <motion.div
-      className="flex flex-col gap-8 mt-8 transition-colors duration-500"
-      initial="initial"
-      animate="animate"
-      variants={{
-        initial: {},
-        animate: { transition: { staggerChildren: 0.13, delayChildren: 0.1 } }
-      }}
-    >
-      <motion.div {...fadeInUp(0)} className="flex items-center justify-between">
-        <h2 className="text-2xl font-extrabold text-gray-900 dark:text-gray-100 tracking-tight">
-          Progress Overview
-        </h2>
-        <Button
-          variant="outline"
-          size="sm"
-          className="hover:scale-105 transition"
-          onClick={handleViewProfile}
+    <div className="space-y-4">
+      {/* Header */}
+      <div className="flex items-center justify-between">
+        <motion.h2
+          className="text-3xl font-black text-foreground"
+          initial={{ opacity: 0, x: -20 }}
+          animate={{ opacity: 1, x: 0 }}
         >
-          <User className="w-4 h-4 mr-1" />
-          View Profile
-        </Button>
+          Progress Overview
+        </motion.h2>
+        <motion.button
+          onClick={onViewProfile}
+          className="px-4 py-2 bg-primary/10 hover:bg-primary/20 text-primary rounded-xl font-semibold text-sm transition-all duration-300 hover:scale-105 flex items-center gap-2"
+          whileHover={{ scale: 1.05 }}
+          whileTap={{ scale: 0.95 }}
+        >
+          <span>View Profile</span>
+          <ArrowRight size={16} />
+        </motion.button>
+      </div>
+
+      {/* Main Card */}
+      <motion.div
+        className="bg-gradient-to-br from-primary/10 via-accent/5 to-primary/5 rounded-2xl p-5 sm:p-6 border border-border shadow-lg relative overflow-hidden"
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ delay: 0.1 }}
+      >
+        {/* Background decoration */}
+        <div className="absolute top-0 right-0 w-64 h-64 bg-primary/5 rounded-full blur-3xl" />
+        <div className="absolute bottom-0 left-0 w-64 h-64 bg-accent/5 rounded-full blur-3xl" />
+
+        <div className="relative z-10 space-y-4">
+          {/* User Info */}
+          <div className="flex items-center justify-between flex-wrap gap-4">
+            <div className="flex items-center gap-4">
+              <div className="relative">
+                <Avatar
+                  user={user}
+                  size="lg"
+                  className="w-16 h-16 sm:w-20 sm:h-20 rounded-2xl border-4 border-primary/30 shadow-lg"
+                />
+                <motion.div
+                  className="absolute -bottom-1 -right-1 w-8 h-8 bg-accent rounded-full flex items-center justify-center border-4 border-card"
+                  animate={{ scale: [1, 1.2, 1] }}
+                  transition={{ duration: 2, repeat: Infinity }}
+                >
+                  <Flame className="w-4 h-4 text-white" />
+                </motion.div>
+              </div>
+              <div>
+                <h3 className="text-2xl font-black text-foreground">
+                  {user.name}
+                </h3>
+                <p className="text-sm text-muted-foreground font-semibold">
+                  Level {user.level}
+                </p>
+              </div>
+            </div>
+            <div className="flex flex-col items-end gap-1">
+              <div className="flex items-center gap-2">
+                <Star className="w-5 h-5 text-accent fill-accent" />
+                <span className="text-2xl font-black text-foreground">
+                  {user.totalXP}
+                </span>
+              </div>
+              <span className="text-xs text-muted-foreground font-semibold">
+                XP: {user.totalXP}
+              </span>
+              <span className="text-xs text-primary font-semibold">
+                Rank: Pro
+              </span>
+            </div>
+          </div>
+
+          {/* XP Progress Bar - SAME CALCULATION AS PROFILE */}
+          <div className="space-y-2">
+            <div className="flex justify-between text-sm">
+              <span className="text-muted-foreground font-semibold">
+                {user.totalXP} XP
+              </span>
+              <span className="text-primary font-bold">
+                {user.xpToNextLevel} XP to next level
+              </span>
+            </div>
+            <div className="h-3 bg-muted rounded-full overflow-hidden">
+              <motion.div
+                className="h-full bg-gradient-to-r from-primary to-accent rounded-full"
+                initial={{ width: 0 }}
+                animate={{ width: `${progressPercent}%` }}
+                transition={{ duration: 1, delay: 0.3 }}
+              />
+            </div>
+          </div>
+
+          {/* Stats Grid */}
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+            {stats.map((stat, index) => (
+              <motion.div
+                key={stat.label}
+                className="flex flex-col items-center justify-center p-4 bg-card rounded-xl border border-border shadow-sm"
+                initial={{ opacity: 0, scale: 0.9 }}
+                animate={{ opacity: 1, scale: 1 }}
+                transition={{ delay: 0.2 + index * 0.1 }}
+                whileHover={{ scale: 1.05, y: -2 }}
+              >
+                <stat.icon className={`w-6 h-6 mb-2 ${stat.color}`} />
+                <p className="text-2xl font-black text-foreground">
+                  {stat.value}
+                </p>
+                <p className="text-xs text-muted-foreground font-semibold">
+                  {stat.label}
+                </p>
+              </motion.div>
+            ))}
+          </div>
+
+          {/* Today's Progress */}
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+            {/* Today Card */}
+            <motion.div
+              className="bg-primary/10 rounded-xl p-5 border border-primary/20"
+              whileHover={{ scale: 1.02 }}
+            >
+              <div className="flex justify-between items-start mb-4">
+                <div>
+                  <h4 className="text-lg font-bold text-foreground mb-1">
+                    Today
+                  </h4>
+                  <p className="text-sm text-muted-foreground">2 lessons</p>
+                </div>
+                <div className="text-right">
+                  <p className="text-xl font-black text-primary">35 XP</p>
+                  <p className="text-xs text-muted-foreground">25 min</p>
+                </div>
+              </div>
+              <div className="space-y-2">
+                <div className="flex items-center gap-2 text-sm">
+                  <Flame className="w-4 h-4 text-accent" />
+                  <span className="text-accent font-bold">Streak: 7 days</span>
+                </div>
+                <div className="flex items-center gap-2 text-sm">
+                  <CheckCircle2 className="w-4 h-4 text-success" />
+                  <span className="text-foreground font-semibold">
+                    Weekly Goal: 180/300 XP
+                  </span>
+                </div>
+              </div>
+            </motion.div>
+
+            {/* Next Achievement Card */}
+            <motion.div
+              className="bg-gradient-to-br from-accent/20 to-accent/10 rounded-xl p-5 border border-accent/30"
+              whileHover={{ scale: 1.02 }}
+            >
+              <div className="flex items-start gap-3">
+                <div className="w-12 h-12 bg-accent/20 rounded-xl flex items-center justify-center flex-shrink-0">
+                  <Award className="w-6 h-6 text-accent" />
+                </div>
+                <div className="flex-1">
+                  <h4 className="text-sm font-bold text-accent mb-1">
+                    Next Achievement
+                  </h4>
+                  <p className="text-lg font-black text-foreground mb-2">
+                    Streaker
+                  </p>
+                  <p className="text-xs text-muted-foreground mb-3">
+                    Maintain a 7-day learning streak.
+                  </p>
+                  <div className="space-y-1">
+                    <div className="flex justify-between text-xs">
+                      <span className="text-muted-foreground font-semibold">
+                        5/7 (71%) to unlock
+                      </span>
+                    </div>
+                    <div className="h-2 bg-muted rounded-full overflow-hidden">
+                      <div className="h-full bg-gradient-to-r from-accent to-accent/70 w-[71%] rounded-full" />
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </motion.div>
+          </div>
+        </div>
       </motion.div>
 
-      {/* User Profile Card */}
-      <motion.div {...fadeInUp(0.5)}>
-        <Card className="glass-card bg-gradient-to-tr from-blue-100/80 via-purple-50/70 to-white/70 dark:from-gray-900/80 dark:via-purple-900/70 dark:to-gray-900/70 border-0 rounded-2xl p-7 shadow-xl transition-colors duration-500">
+      {/* Quick Stats */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
+        {quickStats.map((stat, index) => (
           <motion.div
-            className="flex flex-col md:flex-row md:items-center md:justify-between gap-4"
-            initial={{ opacity: 0, y: 14 }}
+            key={stat.label}
+            className="bg-card rounded-xl p-4 border border-border hover:border-primary/30 transition-all duration-300 hover:shadow-md"
+            initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.19, duration: 0.65 }}
+            transition={{ delay: 0.3 + index * 0.1 }}
+            whileHover={{ y: -2 }}
           >
-            <div className="flex-1">
-              <div className="flex items-center gap-4 mb-3">
-                <motion.div whileHover={{ scale: 1.09 }}>
-                  <div className="relative">
-                    {user.avatar ? (
-                      <img
-                        src={typeof user.avatar === "string" ? user.avatar : ""}
-                        alt={user.name ?? "User"}
-                        className="w-16 h-16 rounded-full object-cover border-2 border-blue-300 shadow"
-                      />
-                    ) : (
-                      <div className="w-16 h-16 rounded-full flex items-center justify-center text-3xl bg-blue-200 dark:bg-blue-600 font-extrabold text-white shadow">
-                        {user.name ? user.name[0] : "?"}
-                      </div>
-                    )}
-                    {user.currentStreak >= 5 && (
-                      <div className="absolute -bottom-1 -right-1 flex items-center gap-1 bg-white dark:bg-gray-900 rounded-full px-2 py-0.5 shadow text-xs text-orange-500 font-bold border border-orange-200 dark:border-orange-400">
-                        <Flame size={14} className="mr-1" />
-                        {user.currentStreak}d
-                      </div>
-                    )}
-                  </div>
-                </motion.div>
-                <div>
-                  <h3 className="font-bold text-xl text-gray-900 dark:text-gray-100">{user.name ?? "User"}</h3>
-                  <div className="text-xs text-gray-500 dark:text-gray-300">Level {user.level ?? 1}</div>
-                </div>
-                <div className="ml-auto flex flex-col items-end">
-                  <div className="text-xs text-blue-600 dark:text-yellow-200 font-bold flex items-center gap-1">
-                    <Star size={14} className="text-yellow-400" /> XP: {user.totalXP ?? 0}
-                  </div>
-                  <div className="text-xs text-gray-400 dark:text-gray-200 flex items-center gap-1">
-                    <Trophy size={13} className="text-yellow-600" /> Rank: {(user.level ?? 1) >= 10 ? 'Pro' : 'Learner'}
-                  </div>
-                </div>
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 bg-primary/10 rounded-xl flex items-center justify-center">
+                <stat.icon className="w-5 h-5 text-primary" />
               </div>
-              <div className="mb-3">
-                <div className="flex justify-between text-xs font-semibold text-gray-700 dark:text-gray-300 mb-1">
-                  <span>{user.totalXP ?? 0} XP</span>
-                  <span>{user.xpToNextLevel ?? 0} XP to next level</span>
-                </div>
-                <ProgressBar
-                  progress={progressPercent}
-                  color="blue"
-                  animated
-                  className="shadow"
-                />
-              </div>
-              <div className="grid grid-cols-2 gap-4 my-4">
-                <div className="flex items-center gap-2">
-                  <TrendingUp className="text-blue-600 dark:text-blue-300" size={20} />
-                  <div>
-                    <div className="font-bold text-lg text-gray-900 dark:text-gray-100">
-                      {user?.stats?.totalLessonsCompleted ?? 0}
-                    </div>
-                    <div className="text-xs text-gray-500 dark:text-gray-300">Lessons</div>
-                  </div>
-                </div>
-                <div className="flex items-center gap-2">
-                  <Award className="text-yellow-500" size={20} />
-                  <div>
-                    <div className="font-bold text-lg text-gray-900 dark:text-gray-100">
-                      {user?.stats?.coursesCompleted ?? 0}
-                    </div>
-                    <div className="text-xs text-gray-500 dark:text-gray-300">Courses</div>
-                  </div>
-                </div>
-                <div className="flex items-center gap-2">
-                  <Star className="text-green-500" size={20} />
-                  <div>
-                    <div className="font-bold text-lg text-gray-900 dark:text-gray-100">
-                      {user?.stats?.averageAccuracy ?? 0}%
-                    </div>
-                    <div className="text-xs text-gray-500 dark:text-gray-300">Accuracy</div>
-                  </div>
-                </div>
-                <div className="flex items-center gap-2">
-                  <Flame className="text-orange-500" size={20} />
-                  <div>
-                    <div className="font-bold text-lg text-gray-900 dark:text-gray-100">
-                      {user.currentStreak ?? 0}d
-                    </div>
-                    <div className="text-xs text-gray-500 dark:text-gray-300">Streak</div>
-                  </div>
-                </div>
-              </div>
-              <div className="flex flex-col md:flex-row gap-2">
-                <motion.div whileHover={{ scale: 1.03 }} className="flex-1 bg-blue-100 dark:bg-blue-900 rounded-xl px-4 py-3 flex flex-col gap-1">
-                  <div className="flex justify-between text-xs font-semibold text-blue-700 dark:text-blue-200">
-                    <span>Today</span>
-                    <span>{dailyActivity.todayXP ?? 0} XP</span>
-                  </div>
-                  <div className="flex justify-between text-xs text-gray-500 dark:text-gray-300">
-                    <span>{dailyActivity.todayLessons ?? 0} lessons</span>
-                    <span>{dailyActivity.todayMinutes ?? 0} min</span>
-                  </div>
-                  <div className="flex items-center gap-2 mt-2">
-                    <Flame size={16} className="text-orange-400" />
-                    <span className="text-xs text-orange-700 dark:text-orange-300 font-semibold">
-                      Streak: {dailyActivity.streak ?? 0} days
-                    </span>
-                  </div>
-                  <div className="flex items-center gap-2 mt-1">
-                    <CheckCircle size={14} className="text-green-500" />
-                    <span className="text-xs text-green-700 dark:text-green-300">
-                      Weekly Goal: {dailyActivity.weeklyProgress ?? 0}/{dailyActivity.weeklyGoal ?? 0} XP
-                    </span>
-                  </div>
-                </motion.div>
-                <motion.div whileHover={{ scale: 1.03 }} className="flex-1 bg-yellow-50 dark:bg-yellow-900 rounded-xl px-4 py-3 border border-yellow-200 dark:border-yellow-700 flex flex-col gap-1">
-                  <div className="flex items-center gap-2 text-yellow-700 dark:text-yellow-300 font-semibold mb-1">
-                    <Award size={16} className="text-yellow-500" />
-                    Next Achievement
-                  </div>
-                  {nextAchievement ? (
-                    <>
-                      <div className="font-bold text-gray-800 dark:text-gray-100 mb-0.5">{nextAchievement.name}</div>
-                      <div className="text-xs text-gray-500 dark:text-gray-300 mb-2">{nextAchievement.description}</div>
-                      <ProgressBar
-                        progress={Math.round(
-                          (nextAchievement.progress / nextAchievement.target) * 100
-                        )}
-                        color="yellow"
-                        animated
-                        className="shadow"
-                      />
-                      <div className="text-xs text-yellow-700 dark:text-yellow-300 font-semibold mt-1">
-                        {nextAchievement.progress}/{nextAchievement.target} ({Math.round(
-                          (nextAchievement.progress / nextAchievement.target) * 100
-                        )}%) to unlock
-                      </div>
-                    </>
-                  ) : (
-                    <div className="text-xs text-gray-500">All achievements unlocked!</div>
-                  )}
-                </motion.div>
+              <div>
+                <p className="text-sm font-bold text-foreground">
+                  {stat.label}
+                </p>
               </div>
             </div>
           </motion.div>
-        </Card>
-      </motion.div>
-
-      {/* Lifetime stats */}
-      <motion.div {...fadeInUp(2)} className="grid grid-cols-2 md:grid-cols-4 gap-4 text-xs text-gray-500 dark:text-gray-300 mt-2">
-        <div className="flex items-center gap-1 bg-white/70 dark:bg-gray-800/70 rounded-lg px-3 py-2 shadow">
-          <Clock size={13} />
-          <span>{user?.stats?.totalTimeSpent ?? 0} min total</span>
-        </div>
-        <div className="flex items-center gap-1 bg-white/70 dark:bg-gray-800/70 rounded-lg px-3 py-2 shadow">
-          <Award size={13} />
-          <span>{achievements.filter((a) => !!a.unlockedDate).length} achievements unlocked</span>
-        </div>
-        <div className="flex items-center gap-1 bg-white/70 dark:bg-gray-800/70 rounded-lg px-3 py-2 shadow">
-          <Trophy size={13} />
-          <span>{analyticsData.monthlyStats.coursesStarted ?? 0} courses started</span>
-        </div>
-        <div className="flex items-center gap-1 bg-white/70 dark:bg-gray-800/70 rounded-lg px-3 py-2 shadow">
-          <CheckCircle size={13} />
-          <span>Best streak: {analyticsData.monthlyStats.bestStreak ?? 0} days</span>
-        </div>
-      </motion.div>
-    </motion.div>
+        ))}
+      </div>
+    </div>
   );
 };
 
