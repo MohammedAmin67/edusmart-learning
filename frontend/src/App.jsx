@@ -28,12 +28,188 @@ import LoginPage from "./components/Auth/LoginPage";
 import toast, { Toaster } from "react-hot-toast";
 import { UserProvider, useUser } from "./components/context/UserContext";
 
-// Dark mode context
 export const DarkModeContext = createContext({
   darkMode: false,
   setDarkMode: () => {},
   toggleDarkMode: () => {},
 });
+
+function ScrollToTop() {
+  const { pathname } = useLocation();
+
+  useEffect(() => {
+    window.scrollTo(0, 0);
+  }, [pathname]);
+
+  return null;
+}
+
+function DashboardLayout({
+  activeTab,
+  setActiveTab,
+  sidebarOpen,
+  setSidebarOpen,
+  selectedCourseId,
+  setSelectedCourseId,
+}) {
+  const navigate = useNavigate();
+
+  const handleLearningTabClick = () => {
+    if (selectedCourseId) {
+      setActiveTab("learning");
+      navigate("/dashboard/learning");
+    } else {
+      setActiveTab("courses");
+      navigate("/dashboard/courses");
+      toast.error("Please select a course to continue");
+    }
+  };
+
+  return (
+    <div className="min-h-screen bg-background transition-colors duration-300">
+      <ScrollToTop />
+      <div className="flex min-h-screen">
+        <Sidebar
+          activeTab={activeTab}
+          setActiveTab={(tab) => {
+            setActiveTab(tab);
+            navigate(`/dashboard/${tab === "dashboard" ? "" : tab}`);
+          }}
+          isOpen={sidebarOpen}
+          onClose={() => setSidebarOpen(false)}
+          onLearningTabClick={handleLearningTabClick}
+        />
+        <div className="flex-1 flex flex-col min-h-screen">
+          <Header
+            onMenuToggle={() => setSidebarOpen(!sidebarOpen)}
+            setActiveTab={(tab) => {
+              setActiveTab(tab);
+              navigate(`/dashboard/${tab === "dashboard" ? "" : tab}`);
+            }}
+            setSelectedCourseId={setSelectedCourseId}
+          />
+          <main className="flex-1 w-full">
+            <Routes>
+              <Route
+                index
+                element={
+                  <Dashboard
+                    setActiveTab={(tab) => {
+                      setActiveTab(tab);
+                      navigate(`/dashboard/${tab === "dashboard" ? "" : tab}`);
+                    }}
+                    setSelectedCourseId={setSelectedCourseId}
+                  />
+                }
+              />
+              <Route
+                path="learning"
+                element={
+                  selectedCourseId ? (
+                    <div className="w-full max-w-7xl mx-auto animate-fadeInUp">
+                      <LessonPlayer selectedCourseId={selectedCourseId} />
+                      <div className="mt-4 lg:mt-4">
+                        <QuizSystem
+                          selectedCourseId={selectedCourseId}
+                          setActiveTab={setActiveTab}
+                          onContinue={() => {
+                            setActiveTab("courses");
+                            navigate("/dashboard/courses");
+                          }}
+                        />
+                      </div>
+                      <div className="mt-4 lg:mt-4 flex justify-center pb-8">
+                        <button
+                          className="btn-primary inline-flex items-center gap-2"
+                          onClick={() => {
+                            setActiveTab("courses");
+                            navigate("/dashboard/courses");
+                          }}
+                        >
+                          <svg
+                            className="w-5 h-5"
+                            fill="none"
+                            stroke="currentColor"
+                            viewBox="0 0 24 24"
+                          >
+                            <path
+                              strokeLinecap="round"
+                              strokeLinejoin="round"
+                              strokeWidth={2}
+                              d="M10 19l-7-7m0 0l7-7m-7 7h18"
+                            />
+                          </svg>
+                          Back to My Courses
+                        </button>
+                      </div>
+                    </div>
+                  ) : (
+                    <div className="w-full max-w-7xl mx-auto animate-fadeInUp">
+                      <div className="text-center text-lg py-20 px-6">
+                        <p className="text-muted-foreground">
+                          Please select a course from{" "}
+                          <span
+                            className="text-primary font-semibold underline cursor-pointer hover:text-primary-dark transition-colors"
+                            onClick={() => {
+                              setActiveTab("courses");
+                              navigate("/dashboard/courses");
+                            }}
+                          >
+                            My Courses
+                          </span>{" "}
+                          or use the search bar.
+                        </p>
+                      </div>
+                    </div>
+                  )
+                }
+              />
+              <Route
+                path="courses"
+                element={
+                  <div className="w-full max-w-7xl mx-auto animate-fadeInUp">
+                    <CourseGrid
+                      setActiveTab={(tab) => {
+                        setActiveTab(tab);
+                        navigate(
+                          `/dashboard/${tab === "dashboard" ? "" : tab}`,
+                        );
+                      }}
+                      onSelectCourse={(id) => {
+                        setSelectedCourseId(id);
+                        setActiveTab("learning");
+                        navigate("/dashboard/learning");
+                      }}
+                    />
+                  </div>
+                }
+              />
+              <Route
+                path="analytics"
+                element={
+                  <div className="w-full max-w-7xl mx-auto animate-fadeInUp">
+                    <AnalyticsCharts />
+                  </div>
+                }
+              />
+              <Route
+                path="achievements"
+                element={
+                  <div className="w-full max-w-7xl mx-auto animate-fadeInUp">
+                    <AchievementGallery />
+                  </div>
+                }
+              />
+              <Route path="profile" element={<Profile />} />
+              <Route path="settings" element={<SettingsPanel />} />
+              <Route path="*" element={<Navigate to="/dashboard" replace />} />
+            </Routes>
+          </main>
+        </div>
+      </div>
+    </div>
+  );
+}
 
 function AppRoutes({
   activeTab,
@@ -47,121 +223,27 @@ function AppRoutes({
   const { user, setUser } = useUser();
   const location = useLocation();
 
-  const AnimatedMain = ({ children }) => (
-    <div className="w-full max-w-7xl mx-auto animate-fadeInUp">{children}</div>
-  );
-
-  const handleLearningTabClick = () => {
-    if (selectedCourseId) {
-      setActiveTab("learning");
-    } else {
+  // Sync activeTab with current route
+  useEffect(() => {
+    const path = location.pathname;
+    if (path === "/dashboard" || path === "/dashboard/") {
+      setActiveTab("dashboard");
+    } else if (path.startsWith("/dashboard/profile")) {
+      setActiveTab("profile");
+    } else if (path.startsWith("/dashboard/analytics")) {
+      setActiveTab("analytics");
+    } else if (path.startsWith("/dashboard/courses")) {
       setActiveTab("courses");
-      toast.error("Please select a course to continue");
+    } else if (path.startsWith("/dashboard/learning")) {
+      setActiveTab("learning");
+    } else if (path.startsWith("/dashboard/achievements")) {
+      setActiveTab("achievements");
+    } else if (path.startsWith("/dashboard/settings")) {
+      setActiveTab("settings");
     }
-  };
+  }, [location.pathname, setActiveTab]);
 
-  const renderContent = () => {
-    switch (activeTab) {
-      case "dashboard":
-        return (
-          <Dashboard
-            setActiveTab={setActiveTab}
-            setSelectedCourseId={setSelectedCourseId}
-          />
-        );
-      case "learning":
-        if (!selectedCourseId) {
-          return (
-            <AnimatedMain>
-              <div className="text-center text-lg py-20 px-6">
-                <p className="text-muted-foreground">
-                  Please select a course from{" "}
-                  <span
-                    className="text-primary font-semibold underline cursor-pointer hover:text-primary-dark transition-colors"
-                    onClick={() => setActiveTab("courses")}
-                  >
-                    My Courses
-                  </span>{" "}
-                  or use the search bar.
-                </p>
-              </div>
-            </AnimatedMain>
-          );
-        }
-        return (
-          <AnimatedMain>
-            <LessonPlayer selectedCourseId={selectedCourseId} />
-            <QuizSystem selectedCourseId={selectedCourseId} />
-            <div className="mt-8 flex justify-center pb-8">
-              <button
-                className="btn-primary inline-flex items-center gap-2"
-                onClick={() => setActiveTab("courses")}
-              >
-                <svg
-                  className="w-5 h-5"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M10 19l-7-7m0 0l7-7m-7 7h18"
-                  />
-                </svg>
-                Back to My Courses
-              </button>
-            </div>
-          </AnimatedMain>
-        );
-      case "courses":
-        return (
-          <AnimatedMain>
-            <CourseGrid
-              setActiveTab={setActiveTab}
-              onSelectCourse={(id) => {
-                setSelectedCourseId(id);
-                setActiveTab("learning");
-              }}
-            />
-          </AnimatedMain>
-        );
-      case "analytics":
-        return (
-          <AnimatedMain>
-            <AnalyticsCharts />
-          </AnimatedMain>
-        );
-      case "achievements":
-        return (
-          <AnimatedMain>
-            <AchievementGallery />
-          </AnimatedMain>
-        );
-      case "profile":
-        return (
-          <AnimatedMain>
-            <Profile />
-          </AnimatedMain>
-        );
-      case "settings":
-        return (
-          <AnimatedMain>
-            <SettingsPanel />
-          </AnimatedMain>
-        );
-      default:
-        return (
-          <Dashboard
-            setActiveTab={setActiveTab}
-            setSelectedCourseId={setSelectedCourseId}
-          />
-        );
-    }
-  };
-
-  // ---- Auth Handlers (context driven) ----
+  // Auth Handlers
   const handleLogin = (userObj) => {
     setUser(userObj);
     navigate("/dashboard");
@@ -170,11 +252,6 @@ function AppRoutes({
   const handleSignUp = (userObj) => {
     setUser(userObj);
     navigate("/dashboard");
-  };
-
-  const handleLogout = () => {
-    setUser(null);
-    navigate("/");
   };
 
   return (
@@ -205,31 +282,20 @@ function AppRoutes({
         path="/dashboard/*"
         element={
           !!user ? (
-            <div className="min-h-screen bg-background transition-colors duration-300">
-              <div className="flex min-h-screen">
-                <Sidebar
-                  activeTab={activeTab}
-                  setActiveTab={setActiveTab}
-                  isOpen={sidebarOpen}
-                  onClose={() => setSidebarOpen(false)}
-                  onLearningTabClick={handleLearningTabClick}
-                />
-                <div className="flex-1 flex flex-col min-h-screen">
-                  <Header
-                    onMenuToggle={() => setSidebarOpen(!sidebarOpen)}
-                    setActiveTab={setActiveTab}
-                    setSelectedCourseId={setSelectedCourseId}
-                  />
-                  <main className="flex-1 w-full">{renderContent()}</main>
-                </div>
-              </div>
-            </div>
+            <DashboardLayout
+              activeTab={activeTab}
+              setActiveTab={setActiveTab}
+              sidebarOpen={sidebarOpen}
+              setSidebarOpen={setSidebarOpen}
+              selectedCourseId={selectedCourseId}
+              setSelectedCourseId={setSelectedCourseId}
+            />
           ) : (
             <Navigate to="/login" replace />
           )
         }
       />
-      <Route path="*" element={<Navigate to="/" />} />
+      <Route path="*" element={<Navigate to="/" replace />} />
     </Routes>
   );
 }
@@ -239,30 +305,12 @@ function App() {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [selectedCourseId, setSelectedCourseId] = useState(null);
 
-  // Central dark mode state (init from localStorage or system)
+  // Central dark mode state
   const [darkMode, setDarkMode] = useState(() => {
     const saved = localStorage.getItem("theme");
     if (saved) return saved === "dark";
     return window.matchMedia("(prefers-color-scheme: dark)").matches;
   });
-
-  const location = useLocation();
-
-  useEffect(() => {
-    if (location.pathname.startsWith("/dashboard/profile"))
-      setActiveTab("profile");
-    else if (location.pathname.startsWith("/dashboard/analytics"))
-      setActiveTab("analytics");
-    else if (location.pathname.startsWith("/dashboard/courses"))
-      setActiveTab("courses");
-    else if (location.pathname.startsWith("/dashboard/learning"))
-      setActiveTab("learning");
-    else if (location.pathname.startsWith("/dashboard/achievements"))
-      setActiveTab("achievements");
-    else if (location.pathname.startsWith("/dashboard/settings"))
-      setActiveTab("settings");
-    else setActiveTab("dashboard");
-  }, [location.pathname]);
 
   useEffect(() => {
     if (darkMode) {
@@ -274,12 +322,10 @@ function App() {
     }
   }, [darkMode]);
 
-  // Use useCallback to memoize toggleDarkMode function
   const toggleDarkMode = useCallback(() => {
     setDarkMode((d) => !d);
   }, []);
 
-  // Memoize the context value to prevent unnecessary re-renders
   const darkModeContextValue = useMemo(
     () => ({ darkMode, setDarkMode, toggleDarkMode }),
     [darkMode, toggleDarkMode],

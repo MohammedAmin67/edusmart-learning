@@ -1,135 +1,59 @@
-import React, { useState, useEffect } from "react";
+import React, { useState } from "react";
+import { motion } from "framer-motion";
 import {
   Star,
   Award,
   Trophy,
   Zap,
   Mail,
-  ChevronRight,
   User as UserIcon,
   GraduationCap,
   Target,
+  Camera,
+  Flame,
+  BookOpen,
+  Clock,
+  CheckCircle2,
+  Send,
+  Calendar,
+  MapPin,
+  Briefcase,
+  Edit3,
+  Check,
+  X,
 } from "lucide-react";
-import ProgressBar from "../shared/ProgressBar";
-import Spinner from "../Spinner/Spinner";
-import { motion, AnimatePresence } from "framer-motion";
 import { toast } from "react-hot-toast";
 import { useUser } from "../context/UserContext";
-
-// XP Bar uses ProgressOverview formula for consistency
-const getProgressPercent = (user) =>
-  Math.min(
-    100,
-    Math.round(
-      ((user?.totalXP ?? 0) /
-        ((user?.totalXP ?? 0) + (user?.xpToNextLevel ?? 1))) *
-        100,
-    ),
-  );
-
-const milestonesList = [
-  {
-    id: 1,
-    name: "Avatar Accessories Unlocked",
-    xp: 0,
-    unlocked: (level) => level >= 5,
-    icon: "🎯",
-    date: "Level 5",
-  },
-  {
-    id: 2,
-    name: "New Study Themes",
-    xp: 0,
-    unlocked: (level) => level >= 10,
-    icon: "💻",
-    date: "Level 10",
-  },
-  {
-    id: 3,
-    name: "Advanced Analytics",
-    xp: 0,
-    unlocked: (level) => level >= 15,
-    icon: "🤝",
-    date: "Level 15",
-  },
-  {
-    id: 4,
-    name: "Mentor Badge",
-    xp: 0,
-    unlocked: (level) => level >= 20,
-    icon: "💡",
-    date: "Level 20",
-  },
-  {
-    id: 5,
-    name: "Custom Avatar Creation",
-    xp: 0,
-    unlocked: (level) => level >= 25,
-    icon: "👑",
-    date: "Level 25",
-  },
-];
-
-const recentXPGains = [
-  {
-    id: 1,
-    activity: "JavaScript Arrays Lesson",
-    xp: 50,
-    date: "2 hours ago",
-    type: "project",
-  },
-  {
-    id: 2,
-    activity: "Variables Quiz Perfect Score",
-    xp: 25,
-    date: "3 hours ago",
-    type: "review",
-  },
-  {
-    id: 3,
-    activity: "Daily Login Bonus",
-    xp: 10,
-    date: "1 day ago",
-    type: "fix",
-  },
-  {
-    id: 4,
-    activity: "Week Streak Bonus",
-    xp: 100,
-    date: "2 days ago",
-    type: "mentor",
-  },
-];
-
-const getActivityIcon = (type) => {
-  const icons = {
-    project: <Target className="w-4 h-4" />,
-    review: <Award className="w-4 h-4" />,
-    fix: <Zap className="w-4 h-4" />,
-    mentor: <Star className="w-4 h-4" />,
-    docs: <Trophy className="w-4 h-4" />,
-  };
-  return icons[type] || <Star className="w-4 h-4" />;
-};
+import { userData, achievements, courses } from "../../data/mockData";
 
 const Profile = () => {
   const { user, updateAvatar } = useUser();
-  const [isVisible, setIsVisible] = useState(false);
   const [isUploading, setIsUploading] = useState(false);
-  const [hoveredMilestone, setHoveredMilestone] = useState(null);
   const [formData, setFormData] = useState({
     name: "",
     email: "",
     message: "",
   });
   const [feedbackSent, setFeedbackSent] = useState(false);
-  const [focusedField, setFocusedField] = useState(null);
-  const [avatarUrl, setAvatarUrl] = useState(user?.avatar || "");
+  const [isEditingBio, setIsEditingBio] = useState(false);
+  const [bio, setBio] = useState(
+    "Passionate learner exploring the world of web development and data science.",
+  );
+  const [tempBio, setTempBio] = useState(bio);
   const fileInputRef = React.useRef(null);
 
-  useEffect(() => {
-    setAvatarUrl(user?.avatar || "");
-  }, [user?.avatar]);
+  // Calculate XP progress
+  const getProgressPercent = (user) =>
+    Math.min(
+      100,
+      Math.round(
+        ((user?.totalXP ?? 0) /
+          ((user?.totalXP ?? 0) + (user?.xpToNextLevel ?? 1))) *
+          100,
+      ),
+    );
+
+  const progressPercent = getProgressPercent(user);
 
   const handleAvatarChange = async (e) => {
     const file = e.target.files[0];
@@ -139,377 +63,557 @@ const Profile = () => {
       await updateAvatar(file);
       toast.success("Profile photo updated!");
     } catch (error) {
-      console.error("Error uploading avatar:", error);
-      toast.error("Failed to update profile photo. Please try again.");
+      toast.error("Failed to update profile photo");
     }
     setIsUploading(false);
   };
 
-  useEffect(() => {
-    setIsVisible(true);
-  }, []);
-
-  const handleInputChange = (field, value) => {
-    setFormData((prev) => ({ ...prev, [field]: value }));
+  const handleSubmitFeedback = () => {
+    if (
+      !formData.name.trim() ||
+      !formData.email.trim() ||
+      !formData.message.trim()
+    ) {
+      toast.error("Please fill in all fields");
+      return;
+    }
+    setFeedbackSent(true);
+    toast.success("Thank you for your feedback!");
+    setTimeout(() => {
+      setFeedbackSent(false);
+      setFormData({ name: "", email: "", message: "" });
+    }, 2000);
   };
 
-  // Guard: If no user, render a message
+  // Bio edit handlers
+  const handleEditBio = () => {
+    setTempBio(bio);
+    setIsEditingBio(true);
+  };
+
+  const handleSaveBio = () => {
+    setBio(tempBio);
+    setIsEditingBio(false);
+    toast.success("Bio updated!");
+  };
+
+  const handleCancelBio = () => {
+    setTempBio(bio);
+    setIsEditingBio(false);
+  };
+
+  const milestones = [
+    {
+      id: 1,
+      name: "Avatar Accessories",
+      icon: "🎯",
+      level: 5,
+      unlocked: (user?.level || 0) >= 5,
+    },
+    {
+      id: 2,
+      name: "Study Themes",
+      icon: "💻",
+      level: 10,
+      unlocked: (user?.level || 0) >= 10,
+    },
+    {
+      id: 3,
+      name: "Advanced Analytics",
+      icon: "📊",
+      level: 15,
+      unlocked: (user?.level || 0) >= 15,
+    },
+    {
+      id: 4,
+      name: "Mentor Badge",
+      icon: "💡",
+      level: 20,
+      unlocked: (user?.level || 0) >= 20,
+    },
+    {
+      id: 5,
+      name: "Custom Avatar",
+      icon: "👑",
+      level: 25,
+      unlocked: (user?.level || 0) >= 25,
+    },
+    {
+      id: 6,
+      name: "Certificate Creator",
+      icon: "📜",
+      level: 30,
+      unlocked: (user?.level || 0) >= 30,
+    },
+  ];
+
+  const recentActivity = [
+    {
+      id: 1,
+      activity: "JavaScript Arrays Lesson",
+      xp: 50,
+      date: "2 hours ago",
+      icon: BookOpen,
+      color: "text-primary",
+    },
+    {
+      id: 2,
+      activity: "Variables Quiz Perfect",
+      xp: 25,
+      date: "3 hours ago",
+      icon: Award,
+      color: "text-accent",
+    },
+    {
+      id: 3,
+      activity: "Daily Login Bonus",
+      xp: 10,
+      date: "1 day ago",
+      icon: Zap,
+      color: "text-success",
+    },
+    {
+      id: 4,
+      activity: "Week Streak Bonus",
+      xp: 100,
+      date: "2 days ago",
+      icon: Flame,
+      color: "text-warning",
+    },
+    {
+      id: 5,
+      activity: "Course Completed",
+      xp: 200,
+      date: "3 days ago",
+      icon: Trophy,
+      color: "text-primary",
+    },
+  ];
+
+  const profileInfo = [
+    { label: "Member Since", value: "January 2024", icon: Calendar },
+    { label: "Location", value: "Learning Worldwide", icon: MapPin },
+    { label: "Role", value: "Pro Learner", icon: Briefcase },
+  ];
+
+  const learningStats = [
+    {
+      label: "Study Time",
+      value: "1,250 min",
+      subtext: "Total learning hours",
+      icon: Clock,
+      color: "text-primary",
+    },
+    {
+      label: "Achievements",
+      value: "4/10",
+      subtext: "Badges unlocked",
+      icon: Trophy,
+      color: "text-accent",
+    },
+    {
+      label: "Best Streak",
+      value: "14 days",
+      subtext: "Longest streak",
+      icon: Flame,
+      color: "text-warning",
+    },
+    {
+      label: "Accuracy",
+      value: "87%",
+      subtext: "Average score",
+      icon: Target,
+      color: "text-success",
+    },
+  ];
+
   if (!user) {
     return (
-      <div className="flex flex-col items-center justify-center min-h-[300px] text-gray-500 dark:text-gray-200">
-        Please log in to view your profile.
+      <div className="min-h-screen bg-background flex items-center justify-center">
+        <p className="text-muted-foreground">
+          Please log in to view your profile.
+        </p>
       </div>
     );
   }
 
-  const progressPercent = getProgressPercent(user);
-  const milestones = milestonesList.map((m) => ({
-    ...m,
-    unlocked: m.unlocked(user?.level ?? 0),
-  }));
-
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-100 via-white to-purple-100 dark:from-blue-950 dark:via-blue-900 dark:to-indigo-900/90 backdrop-blur-xl rounded-3xl transition-colors">
-      {/* Animated Background Elements */}
-      <div className="absolute inset-0 overflow-hidden pointer-events-none">
-        <div
-          className="absolute top-1/4 left-1/4 w-96 h-96 rounded-full blur-3xl animate-pulse
-          bg-purple-300/20 dark:bg-purple-600/10"
-        ></div>
-        <div
-          className="absolute bottom-1/4 right-1/4 w-80 h-80 rounded-full blur-3xl animate-pulse delay-1000
-          bg-blue-200/20 dark:bg-blue-600/10"
-        ></div>
-        <div
-          className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-72 h-72 rounded-full blur-3xl animate-pulse delay-2000
-          bg-pink-200/20 dark:bg-pink-500/10"
-        ></div>
-      </div>
-      <div className="relative z-10 container mx-auto px-4 py-8 max-w-7xl">
-        {/* Profile Header Section */}
-        <div
-          className={`transform transition-all duration-1000 ${isVisible ? "translate-y-0 opacity-100" : "translate-y-10 opacity-0"}`}
+    <div className="min-h-screen bg-background transition-colors duration-300">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-4 sm:pt-6 lg:pt-8 pb-8 space-y-6 sm:space-y-8">
+        {/* Header */}
+        <motion.div
+          className="space-y-1"
+          initial={{ opacity: 0, y: -20 }}
+          animate={{ opacity: 1, y: 0 }}
         >
-          <div className="backdrop-blur-xl dark:bg-white/10 bg-white/70 rounded-3xl p-8 mb-8 border border-white/40 dark:border-white/20 shadow-2xl hover:shadow-blue-800/30 transition-all duration-500 hover:bg-white/80 dark:hover:bg-white/15">
-            <div className="flex flex-col lg:flex-row items-center lg:items-start gap-8">
-              {/* Avatar Section */}
-              <div className="relative group">
-                <div className="absolute -inset-1 bg-gradient-to-r from-blue-300 to-pink-400 dark:from-blue-700 dark:to-pink-800 rounded-full blur-sm group-hover:blur-lg transition-all duration-700 animate-pulse"></div>
-                <div
-                  className="relative w-32 h-32 rounded-full flex items-center justify-center border-4 border-white/70 dark:border-white/30 bg-gradient-to-br from-blue-200 via-indigo-200 to-pink-200 dark:from-blue-700 dark:via-indigo-700 dark:to-pink-700 cursor-pointer group"
-                  onClick={() =>
-                    fileInputRef.current && fileInputRef.current.click()
-                  }
-                  style={{ overflow: "hidden" }}
-                  title="Change Profile Photo"
-                >
-                  {isUploading ? (
-                    <div className="absolute inset-0 flex items-center justify-center bg-black/40 z-10 rounded-full">
-                      <Spinner size={48} className="text-blue-500" />
+          <h1 className="text-2xl sm:text-3xl lg:text-4xl font-black text-foreground">
+            Your <span className="gradient-text">Profile</span>
+          </h1>
+          <p className="text-sm sm:text-base text-muted-foreground font-medium">
+            Manage your account and track your journey
+          </p>
+        </motion.div>
+
+        {/* Profile Header Card */}
+        <motion.div
+          className="bg-gradient-to-br from-primary/10 via-accent/5 to-primary/5 rounded-2xl p-6 sm:p-8 border border-border shadow-lg relative overflow-hidden"
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.1 }}
+        >
+          {/* Background decoration */}
+          <div className="absolute top-0 right-0 w-64 h-64 bg-primary/5 rounded-full blur-3xl" />
+          <div className="absolute bottom-0 left-0 w-64 h-64 bg-accent/5 rounded-full blur-3xl" />
+
+          <div className="relative z-10">
+            <div className="flex flex-col lg:flex-row gap-8">
+              {/* Left: Avatar & Basic Info */}
+              <div className="flex flex-col items-center gap-6 lg:w-64 flex-shrink-0">
+                {/* Avatar */}
+                <div className="relative group w-full flex justify-center">
+                  <div
+                    className="relative w-32 h-32 lg:w-48 lg:h-48 rounded-2xl bg-gradient-to-br from-primary to-accent flex items-center justify-center cursor-pointer overflow-hidden border-4 border-primary/30 shadow-lg"
+                    onClick={() => fileInputRef.current?.click()}
+                  >
+                    {isUploading ? (
+                      <div className="absolute inset-0 flex items-center justify-center bg-black/40">
+                        <div className="w-8 h-8 border-4 border-white border-t-transparent rounded-full animate-spin" />
+                      </div>
+                    ) : user?.avatar ? (
+                      <img
+                        src={user.avatar}
+                        alt={user.name}
+                        className="w-full h-full object-cover"
+                      />
+                    ) : (
+                      <UserIcon className="w-16 h-16 lg:w-24 lg:h-24 text-white" />
+                    )}
+                    <div className="absolute inset-0 bg-black/0 group-hover:bg-black/40 transition-colors duration-300 flex items-center justify-center">
+                      <Camera className="w-8 h-8 text-white opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
                     </div>
-                  ) : avatarUrl ? (
-                    <img
-                      src={avatarUrl}
-                      alt={user?.name ?? "User"}
-                      className="w-full h-full object-cover rounded-full"
+                    <input
+                      type="file"
+                      accept="image/*"
+                      className="hidden"
+                      ref={fileInputRef}
+                      onChange={handleAvatarChange}
                     />
-                  ) : (
-                    <UserIcon className="w-16 h-16 text-gray-600 dark:text-white/90 drop-shadow-lg" />
-                  )}
-                  <input
-                    type="file"
-                    accept="image/*"
-                    className="hidden"
-                    ref={fileInputRef}
-                    onChange={handleAvatarChange}
-                  />
-                  <span className="absolute bottom-2 left-1/2 -translate-x-1/2 text-xs bg-black/40 text-white px-2 py-0.5 rounded-lg opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none">
-                    Change Photo
-                  </span>
-                </div>
-                <div className="absolute -bottom-2 -right-2 bg-gradient-to-r from-yellow-300 to-emerald-300 dark:from-green-400 dark:to-emerald-400 text-yellow-900 dark:text-white px-3 py-1 rounded-full text-sm font-bold shadow-lg animate-bounce border border-yellow-200 dark:border-green-300">
-                  LV {user?.level ?? 0}
-                </div>
-              </div>
-              {/* Profile Info */}
-              <div className="flex-1 text-center lg:text-left">
-                <h1 className="text-4xl lg:text-5xl font-bold text-gray-900 dark:text-white mb-2 bg-gradient-to-r from-gray-900 to-purple-600 dark:from-white dark:to-purple-200 bg-clip-text text-transparent">
-                  {user?.name ?? "User"}
-                </h1>
-                <p className="text-purple-800 dark:text-purple-200 text-xl mb-4">
-                  {user?.title ?? ""}
-                </p>
-                <p className="text-blue-700 dark:text-blue-200 mb-6 flex items-center justify-center lg:justify-start gap-2">
-                  <Mail className="w-4 h-4" />
-                  {user?.email ?? ""}
-                </p>
-
-                {/* XP Progress */}
-                <div className="space-y-3">
-                  <div className="flex justify-between items-center text-sm text-gray-700 dark:text-white/80">
-                    <span className="flex items-center gap-2">
-                      <GraduationCap className="w-4 h-4 text-yellow-500 dark:text-yellow-400" />
-                      Experience Points
-                    </span>
-                    <span>
-                      {user?.totalXP ?? 0} XP{" "}
-                      <span className="text-xs text-gray-400 dark:text-gray-300 font-normal">
-                        (Next level: {user?.xpToNextLevel ?? 0} XP)
-                      </span>
-                    </span>
                   </div>
-                  <div className="flex items-center gap-3">
-                    <ProgressBar
-                      progress={progressPercent}
-                      color="blue"
-                      animated
-                      className="shadow flex-1"
-                    />
-                    <span className="text-gray-800 dark:text-white/80 font-semibold w-12 text-right">
-                      {progressPercent}%
-                    </span>
+                  <div className="absolute -bottom-2 -right-2 lg:right-8 bg-gradient-to-r from-accent to-accent/70 text-white px-4 py-2 rounded-full text-lg font-bold shadow-lg border-2 border-card">
+                    LV {user?.level || 0}
                   </div>
                 </div>
-              </div>
-            </div>
-          </div>
-        </div>
 
-        {/* XP Stats Card (left) + Milestones (right) */}
-        <div className="grid lg:grid-cols-3 gap-8 mb-8">
-          {/* XP Statistics */}
-          <div className="lg:col-span-1 flex items-stretch">
-            <div className="w-full backdrop-blur-xl dark:bg-white/10 bg-white/70 rounded-3xl p-6 border border-white/40 dark:border-white/20 shadow-2xl hover:shadow-blue-700/25 transition-all duration-500 hover:bg-white/80 dark:hover:bg-white/15 h-full flex flex-col">
-              <h3 className="text-2xl font-bold text-gray-900 dark:text-white mb-6 flex items-center gap-2">
-                <Trophy className="w-6 h-6 text-yellow-500 dark:text-yellow-400 animate-pulse" />
-                XP Statistics
-              </h3>
-              <div className="space-y-4">
-                <div className="flex justify-between items-center p-4 rounded-xl bg-white/80 dark:bg-white/5 hover:bg-white/90 dark:hover:bg-white/10 transition-colors duration-300 group">
-                  <span className="text-gray-800 dark:text-white/80 group-hover:text-blue-800 dark:group-hover:text-white transition-colors">
-                    Total XP
-                  </span>
-                  <span className="text-2xl font-bold text-blue-600 dark:text-blue-300 group-hover:scale-110 transition-transform duration-300">
-                    {user?.totalXP ?? 0}
-                  </span>
-                </div>
-                <div className="flex justify-between items-center p-4 rounded-xl bg-white/80 dark:bg-white/5 hover:bg-white/90 dark:hover:bg-white/10 transition-colors duration-300 group">
-                  <span className="text-gray-800 dark:text-white/80 group-hover:text-blue-800 dark:group-hover:text-white transition-colors">
-                    Level
-                  </span>
-                  <span className="text-2xl font-bold text-green-700 dark:text-green-300 group-hover:scale-110 transition-transform duration-300">
-                    {user?.level ?? 0}
-                  </span>
-                </div>
-                <div className="flex justify-between items-center p-4 rounded-xl bg-white/80 dark:bg-white/5 hover:bg-white/90 dark:hover:bg-white/10 transition-colors duration-300 group">
-                  <span className="text-gray-800 dark:text-white/80 group-hover:text-blue-800 dark:group-hover:text-white transition-colors">
-                    Next Level
-                  </span>
-                  <span className="text-2xl font-bold text-yellow-700 dark:text-yellow-300 group-hover:scale-110 transition-transform duration-300">
-                    {user?.xpToNextLevel ?? 0} XP
-                  </span>
-                </div>
-                <div className="flex justify-between items-center p-4 rounded-xl bg-white/80 dark:bg-white/5 hover:bg-white/90 dark:hover:bg-white/10 transition-colors duration-300 group">
-                  <span className="text-gray-800 dark:text-white/80 group-hover:text-blue-800 dark:group-hover:text-white transition-colors">
-                    Progress
-                  </span>
-                  <span className="text-2xl font-bold text-blue-600 dark:text-blue-200 group-hover:scale-110 transition-transform duration-300">
-                    {progressPercent}%
-                  </span>
-                </div>
-              </div>
-            </div>
-          </div>
-          {/* Milestones */}
-          <div className="lg:col-span-2 flex items-stretch">
-            <div
-              className={`w-full transform transition-all duration-1000 delay-400 ${isVisible ? "translate-y-0 opacity-100" : "translate-y-10 opacity-0"}`}
-            >
-              <div className="backdrop-blur-xl dark:bg-white/10 bg-white/70 rounded-3xl p-6 border border-white/40 dark:border-white/20 shadow-2xl hover:shadow-pink-500/25 transition-all duration-500 hover:bg-white/80 dark:hover:bg-white/15 h-full">
-                <h3 className="text-2xl font-bold text-gray-900 dark:text-white mb-6 flex items-center gap-2">
-                  <Award className="w-6 h-6 text-pink-400 animate-pulse" />
-                  Level Milestones
-                </h3>
-                <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
-                  {milestones.map((milestone) => (
+                {/* Profile Info Items - REMOVED EXTRA SPACE */}
+                <div className="space-y-3 w-full">
+                  {profileInfo.map((info, index) => (
                     <div
-                      key={milestone.id}
-                      className={`relative p-4 rounded-2xl border transition-all duration-500 cursor-pointer transform hover:scale-105 hover:-translate-y-1 ${
-                        milestone.unlocked
-                          ? "bg-gradient-to-br from-blue-200/50 to-pink-200/50 dark:from-blue-700/20 dark:to-pink-700/20 border-blue-300/30 dark:border-blue-400/30 hover:border-blue-400/50 shadow-lg hover:shadow-blue-500/25"
-                          : "bg-white/70 dark:bg-white/5 border-white/40 dark:border-white/10 hover:border-blue-200/60 dark:hover:border-white/20 grayscale hover:grayscale-0"
-                      }`}
-                      onMouseEnter={() => setHoveredMilestone(milestone.id)}
-                      onMouseLeave={() => setHoveredMilestone(null)}
+                      key={index}
+                      className="flex items-center gap-3 p-3 rounded-xl bg-card/50 border border-border"
                     >
-                      {milestone.unlocked && (
-                        <div className="absolute -top-2 -right-2 w-6 h-6 bg-gradient-to-r from-green-300 to-emerald-300 dark:from-green-400 dark:to-emerald-400 rounded-full flex items-center justify-center animate-pulse border border-green-200 dark:border-green-300">
-                          <span className="text-xs text-green-900 dark:text-white">
-                            ✓
-                          </span>
-                        </div>
-                      )}
-                      <div className="text-center">
-                        <div
-                          className={`text-3xl mb-2 transition-transform duration-300 ${hoveredMilestone === milestone.id ? "scale-125 animate-bounce" : ""}`}
-                        >
-                          {milestone.icon}
-                        </div>
-                        <h4 className="font-semibold text-gray-900 dark:text-white mb-1 text-sm">
-                          {milestone.name}
-                        </h4>
-                        <p className="text-xs text-gray-500 dark:text-white/60 mb-2">
-                          {milestone.xp ? `${milestone.xp} XP` : milestone.date}
+                      <info.icon className="w-5 h-5 text-muted-foreground flex-shrink-0" />
+                      <div className="flex-1 min-w-0">
+                        <p className="text-xs text-muted-foreground">
+                          {info.label}
+                        </p>
+                        <p className="text-sm font-semibold text-foreground truncate">
+                          {info.value}
                         </p>
                       </div>
                     </div>
                   ))}
                 </div>
               </div>
-            </div>
-          </div>
-        </div>
 
-        {/* Recent XP Gains and Contact */}
-        <div className="grid lg:grid-cols-2 gap-8">
-          {/* Recent XP Gains */}
-          <div
-            className={`transform transition-all duration-1000 delay-600 ${isVisible ? "translate-y-0 opacity-100" : "translate-y-10 opacity-0"}`}
-          >
-            <div className="backdrop-blur-xl dark:bg-white/10 bg-white/70 rounded-3xl p-6 border border-white/40 dark:border-white/20 shadow-2xl hover:shadow-green-500/25 transition-all duration-500 hover:bg-white/80 dark:hover:bg-white/15 h-full">
-              <h3 className="text-2xl font-bold text-gray-900 dark:text-white mb-6 flex items-center gap-2">
-                <Zap className="w-6 h-6 text-blue-400 animate-pulse" />
-                Recent XP Gains
-              </h3>
-              <div className="space-y-3">
-                {recentXPGains.map((gain, index) => (
-                  <div
-                    key={gain.id}
-                    className="flex items-center gap-4 p-4 rounded-2xl bg-white/80 dark:bg-white/5 hover:bg-white/90 dark:hover:bg-white/10 transition-all duration-300 group cursor-pointer transform hover:scale-[1.02] hover:shadow-lg"
-                    style={{ animationDelay: `${index * 100}ms` }}
-                  >
-                    <div className="flex-shrink-0 w-10 h-10 bg-gradient-to-br from-blue-200/50 to-purple-200/50 dark:from-blue-700/20 dark:to-purple-700/20 rounded-full flex items-center justify-center text-blue-700 dark:text-white group-hover:scale-110 transition-transform duration-300">
-                      {getActivityIcon(gain.type)}
-                    </div>
-                    <div className="flex-1">
-                      <h4 className="font-medium text-gray-900 dark:text-white group-hover:text-blue-700 dark:group-hover:text-blue-200 transition-colors duration-300">
-                        {gain.activity}
-                      </h4>
-                      <p className="text-sm text-gray-600 dark:text-white/60">
-                        {gain.date}
-                      </p>
-                    </div>
-                    <div className="flex-shrink-0 text-right">
-                      <div className="text-lg font-bold text-green-600 dark:text-green-300 group-hover:scale-110 transition-transform duration-300">
-                        +{gain.xp} XP
+              {/* Right: User Details & Progress */}
+              <div className="flex-1 space-y-6">
+                {/* Name & Email */}
+                <div>
+                  <h2 className="text-3xl sm:text-4xl font-black text-foreground mb-2">
+                    {user?.name || "User"}
+                  </h2>
+                  <p className="text-muted-foreground flex items-center gap-2">
+                    <Mail className="w-4 h-4" />
+                    {user?.email || ""}
+                  </p>
+                </div>
+
+                {/* Bio Section - FIXED FUNCTIONALITY */}
+                <div className="p-4 rounded-xl bg-card/50 border border-border">
+                  <div className="flex items-center justify-between mb-3">
+                    <h4 className="font-semibold text-foreground">About</h4>
+                    {!isEditingBio ? (
+                      <button
+                        onClick={handleEditBio}
+                        className="text-xs text-primary hover:text-primary/80 flex items-center gap-1 transition-colors"
+                      >
+                        <Edit3 className="w-3 h-3" />
+                        Edit
+                      </button>
+                    ) : (
+                      <div className="flex items-center gap-2">
+                        <button
+                          onClick={handleSaveBio}
+                          className="text-xs text-success hover:text-success/80 flex items-center gap-1 transition-colors"
+                        >
+                          <Check className="w-3 h-3" />
+                          Save
+                        </button>
+                        <button
+                          onClick={handleCancelBio}
+                          className="text-xs text-destructive hover:text-destructive/80 flex items-center gap-1 transition-colors"
+                        >
+                          <X className="w-3 h-3" />
+                          Cancel
+                        </button>
+                      </div>
+                    )}
+                  </div>
+                  {isEditingBio ? (
+                    <textarea
+                      value={tempBio}
+                      onChange={(e) => setTempBio(e.target.value)}
+                      className="w-full p-3 rounded-lg bg-background border border-border text-sm text-foreground resize-none focus:ring-2 focus:ring-primary focus:border-primary outline-none"
+                      rows={3}
+                      placeholder="Tell us about yourself..."
+                    />
+                  ) : (
+                    <p className="text-sm text-muted-foreground">{bio}</p>
+                  )}
+                </div>
+
+                {/* XP Progress */}
+                <div className="space-y-3">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-3">
+                      <div className="w-12 h-12 bg-primary/10 rounded-xl flex items-center justify-center">
+                        <Star className="w-6 h-6 text-primary" />
+                      </div>
+                      <div>
+                        <p className="text-sm text-muted-foreground">
+                          Experience Points
+                        </p>
+                        <p className="text-2xl font-black text-foreground">
+                          {user?.totalXP || 0} XP
+                        </p>
                       </div>
                     </div>
+                    <div className="text-right">
+                      <p className="text-sm text-primary font-bold">
+                        {user?.xpToNextLevel || 0} XP
+                      </p>
+                      <p className="text-xs text-muted-foreground">
+                        to level {(user?.level || 0) + 1}
+                      </p>
+                    </div>
                   </div>
-                ))}
-              </div>
-            </div>
-          </div>
-          {/* Contact Me Section */}
-          <div
-            className={`transform transition-all duration-1000 delay-800 ${isVisible ? "translate-y-0 opacity-100" : "translate-y-10 opacity-0"}`}
-          >
-            <div className="backdrop-blur-xl dark:bg-white/10 bg-white/70 rounded-3xl p-6 border border-white/40 dark:border-white/20 shadow-2xl hover:shadow-cyan-500/25 transition-all duration-500 hover:bg-white/80 dark:hover:bg-white/15 h-full">
-              <h3 className="text-2xl font-bold text-gray-900 dark:text-white mb-6 flex items-center gap-2">
-                <Mail className="w-6 h-6 text-cyan-400 animate-pulse" />
-                Feedback
-              </h3>
-              {/* Contact Form */}
-              <div className="space-y-4">
-                {["name", "email", "message"].map((field) => (
-                  <div key={field} className="relative">
-                    <label
-                      className={`absolute left-4 transition-all duration-300 pointer-events-none ${
-                        focusedField === field || formData[field]
-                          ? "-top-2 text-xs bg-gradient-to-r from-blue-600 to-pink-400 dark:from-blue-400 dark:to-pink-400 bg-clip-text text-transparent"
-                          : "top-3 text-gray-600 dark:text-white/60"
-                      }`}
+                  <div className="h-4 bg-muted rounded-full overflow-hidden">
+                    <motion.div
+                      className="h-full bg-gradient-to-r from-primary via-accent to-primary rounded-full relative"
+                      initial={{ width: 0 }}
+                      animate={{ width: `${progressPercent}%` }}
+                      transition={{ duration: 1, delay: 0.3 }}
                     >
-                      {field.charAt(0).toUpperCase() + field.slice(1)}
-                    </label>
-                    {field === "message" ? (
-                      <textarea
-                        className="w-full p-4 bg-white/90 dark:bg-white/10 border border-black/40 dark:border-cyan/20 rounded-2xl text-gray-900 dark:text-white placeholder-transparent focus:outline-none focus:border-blue-400/50 focus:bg-white/95 dark:focus:bg-white/15 transition-all duration-300 resize-none h-24 hover:shadow-lg"
-                        onFocus={() => setFocusedField(field)}
-                        onBlur={() => setFocusedField(null)}
-                        onChange={(e) =>
-                          handleInputChange(field, e.target.value)
-                        }
-                        value={formData[field]}
-                      />
-                    ) : (
-                      <input
-                        type={field === "email" ? "email" : "text"}
-                        className="w-full p-4 bg-white/90 dark:bg-white/10 border border-black/40 dark:border-cyan/20 rounded-2xl text-gray-900 dark:text-white placeholder-transparent focus:outline-none focus:border-blue-400/50 focus:bg-white/95 dark:focus:bg-white/15 transition-all duration-300 hover:shadow-lg"
-                        onFocus={() => setFocusedField(field)}
-                        onBlur={() => setFocusedField(null)}
-                        onChange={(e) =>
-                          handleInputChange(field, e.target.value)
-                        }
-                        value={formData[field]}
-                      />
-                    )}
+                      <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent animate-shimmer" />
+                    </motion.div>
                   </div>
-                ))}
-                {/* --- FEEDBACK MESSAGE | THANK YOU --- */}
-                <div className="relative">
-                  <AnimatePresence>
-                    {feedbackSent ? (
-                      <motion.div
-                        initial={{ opacity: 0, y: 10, scale: 0.9 }}
-                        animate={{ opacity: 1, y: 0, scale: 1 }}
-                        exit={{ opacity: 0, y: -10, scale: 0.96 }}
-                        transition={{ duration: 0.4 }}
-                        className="w-full py-4 rounded-2xl bg-gradient-to-r from-blue-400 to-pink-400 text-white font-semibold flex items-center justify-center gap-2 shadow-xl text-lg"
-                        style={{
-                          position: "absolute",
-                          left: 0,
-                          top: 0,
-                          zIndex: 10,
-                        }}
-                      >
-                        <GraduationCap className="w-5 h-5 text-yellow-200 animate-spin-slow" />
-                        Thank you for your feedback!
-                      </motion.div>
-                    ) : (
-                      <button
-                        type="button"
-                        onClick={() => {
-                          const { name, email, message } = formData;
-                          if (!name.trim()) {
-                            toast.error("Please enter your name.");
-                            return;
-                          }
-                          if (!email.trim()) {
-                            toast.error("Please enter your email.");
-                            return;
-                          }
-                          if (!message.trim()) {
-                            toast.error("Please enter your message.");
-                            return;
-                          }
-                          setFeedbackSent(true);
-                          setTimeout(() => {
-                            setFeedbackSent(false);
-                            setFormData({ name: "", email: "", message: "" });
-                          }, 2000); // Show thank you for 2 seconds
-                        }}
-                        className="w-full py-4 bg-gradient-to-r from-blue-600 to-pink-500 text-white font-semibold rounded-2xl hover:from-blue-700 hover:to-pink-600 transition-all duration-300 transform hover:scale-[1.02] hover:shadow-2xl focus:outline-none focus:ring-2 focus:ring-blue-400/50 flex items-center justify-center gap-2 group"
-                      >
-                        Send Message
-                        <ChevronRight className="w-4 h-4 group-hover:translate-x-1 transition-transform duration-300" />
-                      </button>
-                    )}
-                  </AnimatePresence>
+                  <p className="text-xs text-muted-foreground text-center">
+                    {progressPercent}% complete
+                  </p>
+                </div>
+
+                {/* Learning Stats Grid */}
+                <div className="grid grid-cols-2 gap-4">
+                  {learningStats.map((stat, index) => (
+                    <motion.div
+                      key={stat.label}
+                      className="p-4 rounded-xl bg-card/50 border border-border hover:border-primary/30 transition-all duration-300"
+                      initial={{ opacity: 0, scale: 0.9 }}
+                      animate={{ opacity: 1, scale: 1 }}
+                      transition={{ delay: 0.4 + index * 0.1 }}
+                      whileHover={{ scale: 1.02 }}
+                    >
+                      <div className="flex items-center gap-3 mb-2">
+                        <stat.icon className={`w-5 h-5 ${stat.color}`} />
+                        <p className="text-sm font-semibold text-foreground">
+                          {stat.label}
+                        </p>
+                      </div>
+                      <p className="text-2xl font-black text-foreground mb-1">
+                        {stat.value}
+                      </p>
+                      <p className="text-xs text-muted-foreground">
+                        {stat.subtext}
+                      </p>
+                    </motion.div>
+                  ))}
                 </div>
               </div>
             </div>
           </div>
+        </motion.div>
+
+        {/* Milestones & Recent Activity Grid */}
+        <div className="grid lg:grid-cols-2 gap-6 sm:gap-8">
+          {/* Level Milestones */}
+          <motion.div
+            className="bg-card rounded-2xl p-6 sm:p-8 border border-border shadow-lg"
+            initial={{ opacity: 0, x: -20 }}
+            animate={{ opacity: 1, x: 0 }}
+            transition={{ delay: 0.3 }}
+          >
+            <div className="flex items-center gap-3 mb-6">
+              <div className="w-10 h-10 bg-accent/10 rounded-xl flex items-center justify-center">
+                <Award className="w-5 h-5 text-accent" />
+              </div>
+              <h3 className="text-lg sm:text-xl font-black text-foreground">
+                Level Milestones
+              </h3>
+            </div>
+            <div className="grid grid-cols-2 gap-4">
+              {milestones.map((milestone) => (
+                <motion.div
+                  key={milestone.id}
+                  className={`relative p-4 rounded-xl border transition-all duration-300 cursor-pointer ${
+                    milestone.unlocked
+                      ? "bg-primary/10 border-primary/30 hover:border-primary/50"
+                      : "bg-muted/50 border-border hover:border-border/60 grayscale hover:grayscale-0"
+                  }`}
+                  whileHover={{ scale: 1.05 }}
+                  whileTap={{ scale: 0.95 }}
+                >
+                  {milestone.unlocked && (
+                    <div className="absolute -top-2 -right-2 w-6 h-6 bg-success rounded-full flex items-center justify-center border-2 border-card">
+                      <CheckCircle2 className="w-4 h-4 text-white" />
+                    </div>
+                  )}
+                  <div className="text-center">
+                    <div className="text-3xl mb-2">{milestone.icon}</div>
+                    <p className="text-xs font-bold text-foreground mb-1">
+                      {milestone.name}
+                    </p>
+                    <p className="text-xs text-muted-foreground">
+                      Level {milestone.level}
+                    </p>
+                  </div>
+                </motion.div>
+              ))}
+            </div>
+          </motion.div>
+
+          {/* Recent Activity */}
+          <motion.div
+            className="bg-card rounded-2xl p-6 sm:p-8 border border-border shadow-lg"
+            initial={{ opacity: 0, x: 20 }}
+            animate={{ opacity: 1, x: 0 }}
+            transition={{ delay: 0.4 }}
+          >
+            <div className="flex items-center gap-3 mb-6">
+              <div className="w-10 h-10 bg-primary/10 rounded-xl flex items-center justify-center">
+                <Zap className="w-5 h-5 text-primary" />
+              </div>
+              <h3 className="text-lg sm:text-xl font-black text-foreground">
+                Recent Activity
+              </h3>
+            </div>
+            <div className="space-y-3">
+              {recentActivity.map((activity, index) => (
+                <motion.div
+                  key={activity.id}
+                  className="flex items-center gap-4 p-4 rounded-xl bg-muted/50 hover:bg-muted transition-all duration-300"
+                  initial={{ opacity: 0, x: 20 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  transition={{ delay: 0.5 + index * 0.1 }}
+                  whileHover={{ x: 4 }}
+                >
+                  <div
+                    className={`w-10 h-10 ${activity.color.replace("text", "bg")}/10 rounded-xl flex items-center justify-center`}
+                  >
+                    <activity.icon className={`w-5 h-5 ${activity.color}`} />
+                  </div>
+                  <div className="flex-1">
+                    <h4 className="font-semibold text-foreground text-sm">
+                      {activity.activity}
+                    </h4>
+                    <p className="text-xs text-muted-foreground">
+                      {activity.date}
+                    </p>
+                  </div>
+                  <div className="text-right">
+                    <p className="text-lg font-black text-success">
+                      +{activity.xp}
+                    </p>
+                    <p className="text-xs text-muted-foreground">XP</p>
+                  </div>
+                </motion.div>
+              ))}
+            </div>
+          </motion.div>
         </div>
+
+        {/* Feedback Form */}
+        <motion.div
+          className="bg-card rounded-2xl p-6 sm:p-8 border border-border shadow-lg"
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.5 }}
+        >
+          <div className="flex items-center gap-3 mb-6">
+            <div className="w-10 h-10 bg-accent/10 rounded-xl flex items-center justify-center">
+              <Mail className="w-5 h-5 text-accent" />
+            </div>
+            <h3 className="text-lg sm:text-xl font-black text-foreground">
+              Send Feedback
+            </h3>
+          </div>
+          <div className="w-full space-y-4">
+            <input
+              type="text"
+              placeholder="Your Name"
+              value={formData.name}
+              onChange={(e) =>
+                setFormData({ ...formData, name: e.target.value })
+              }
+              className="w-full px-4 py-3 rounded-xl bg-background border border-border focus:ring-2 focus:ring-primary focus:border-primary transition outline-none text-foreground placeholder:text-muted-foreground"
+            />
+            <input
+              type="email"
+              placeholder="Your Email"
+              value={formData.email}
+              onChange={(e) =>
+                setFormData({ ...formData, email: e.target.value })
+              }
+              className="w-full px-4 py-3 rounded-xl bg-background border border-border focus:ring-2 focus:ring-primary focus:border-primary transition outline-none text-foreground placeholder:text-muted-foreground"
+            />
+            <textarea
+              placeholder="Your Message"
+              value={formData.message}
+              onChange={(e) =>
+                setFormData({ ...formData, message: e.target.value })
+              }
+              rows={4}
+              className="w-full px-4 py-3 rounded-xl bg-background border border-border focus:ring-2 focus:ring-primary focus:border-primary transition outline-none text-foreground placeholder:text-muted-foreground resize-none"
+            />
+            {feedbackSent ? (
+              <motion.div
+                initial={{ opacity: 0, scale: 0.9 }}
+                animate={{ opacity: 1, scale: 1 }}
+                className="w-full py-3 bg-success text-white rounded-xl font-bold text-center flex items-center justify-center gap-2"
+              >
+                <CheckCircle2 className="w-5 h-5" />
+                Thank you for your feedback!
+              </motion.div>
+            ) : (
+              <button
+                onClick={handleSubmitFeedback}
+                className="w-full px-6 py-3 bg-primary text-primary-foreground rounded-xl font-bold hover:scale-105 transition-all duration-300 shadow-md flex items-center justify-center gap-2"
+              >
+                <Send className="w-5 h-5" />
+                Send Message
+              </button>
+            )}
+          </div>
+        </motion.div>
       </div>
     </div>
   );

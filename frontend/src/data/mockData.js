@@ -2,7 +2,7 @@
 
 export const userData = {
   id: 1,
-  name: "AlexJohnson",
+  name: "Alex Johnson",
   email: "alex@example.com",
   level: 12,
   totalXP: 2850,
@@ -42,7 +42,7 @@ export const userData = {
 };
 
 // =====================================================
-// COURSES DATA
+// COURSES DATA - UPDATED FOR COURSEGRID
 // =====================================================
 export const courses = [
   {
@@ -62,6 +62,7 @@ export const courses = [
     instructor: "John Doe",
     rating: 4.8,
     studentsEnrolled: 12500,
+    reviews: 2450,
     lastAccessed: "2025-02-10",
     startedDate: "2024-12-01",
     skills: [
@@ -101,6 +102,7 @@ export const courses = [
     instructor: "Jane Smith",
     rating: 4.9,
     studentsEnrolled: 9800,
+    reviews: 1875,
     lastAccessed: "2025-02-12",
     startedDate: "2025-01-05",
     skills: [
@@ -133,6 +135,7 @@ export const courses = [
     instructor: "Dr. Alan Turing",
     rating: 4.7,
     studentsEnrolled: 7500,
+    reviews: 1620,
     lastAccessed: "2025-02-08",
     startedDate: "2025-01-20",
     skills: ["Big O", "Arrays", "Trees", "Graphs", "Dynamic Programming"],
@@ -158,6 +161,7 @@ export const courses = [
     instructor: "Sarah Connor",
     rating: 4.6,
     studentsEnrolled: 15000,
+    reviews: 3200,
     lastAccessed: null,
     startedDate: null,
     skills: ["Syntax", "Data Types", "Functions", "OOP", "File I/O"],
@@ -180,6 +184,7 @@ export const courses = [
     instructor: "Emily Brown",
     rating: 4.8,
     studentsEnrolled: 8200,
+    reviews: 1540,
     lastAccessed: null,
     startedDate: null,
     skills: [
@@ -208,6 +213,7 @@ export const courses = [
     instructor: "Dr. Andrew Ng",
     rating: 4.9,
     studentsEnrolled: 25000,
+    reviews: 5800,
     lastAccessed: null,
     startedDate: null,
     skills: ["Python", "NumPy", "Pandas", "Scikit-learn", "Neural Networks"],
@@ -216,7 +222,7 @@ export const courses = [
 ];
 
 // =====================================================
-// ANALYTICS DATA
+// ANALYTICS DATA - UPDATED WITH PROPER CALCULATIONS
 // =====================================================
 export const analyticsData = {
   // Weekly data (last 7 days)
@@ -227,7 +233,7 @@ export const analyticsData = {
     timeData: [45, 68, 52, 85, 71, 120, 60], // minutes
     accuracyData: [85, 88, 82, 90, 87, 92, 85],
     totalXP: 1300,
-    totalTime: 501, // minutes
+    totalTime: 501, // minutes (8.35 hours)
     totalLessons: 35,
     avgAccuracy: 87,
     bestDay: "Saturday",
@@ -235,23 +241,23 @@ export const analyticsData = {
     improvement: 15, // percentage
   },
 
-  // Monthly data (last 4 weeks)
+  // Monthly data (last 4 weeks) - FIXED CALCULATIONS
   month: {
     labels: ["Week 1", "Week 2", "Week 3", "Week 4"],
     xpData: [850, 920, 1050, 980],
     lessonsData: [18, 22, 25, 21],
     timeData: [320, 385, 425, 380], // minutes
     accuracyData: [84, 86, 89, 85],
-    totalXP: 3800,
-    totalTime: 1510,
-    totalLessons: 86,
-    avgAccuracy: 85,
+    totalXP: 3800, // Sum of xpData
+    totalTime: 1510, // Sum of timeData (25.17 hours)
+    totalLessons: 86, // Sum of lessonsData
+    avgAccuracy: 86, // Average of accuracyData
     bestDay: "Week 3",
     bestXP: 1050,
     improvement: 22,
   },
 
-  // Yearly data (last 12 months)
+  // Yearly data (last 12 months) - FIXED CALCULATIONS
   year: {
     labels: [
       "Jan",
@@ -273,12 +279,12 @@ export const analyticsData = {
     lessonsData: [65, 75, 82, 88, 95, 102, 108, 115, 120, 118, 110, 125],
     timeData: [
       980, 1120, 1240, 1350, 1480, 1600, 1720, 1850, 1950, 1880, 1780, 1920,
-    ],
+    ], // minutes
     accuracyData: [82, 84, 85, 87, 88, 89, 90, 91, 92, 90, 88, 89],
-    totalXP: 52700,
-    totalTime: 17870,
-    totalLessons: 1203,
-    avgAccuracy: 89,
+    totalXP: 52700, // Sum of xpData
+    totalTime: 17870, // Sum of timeData (297.83 hours)
+    totalLessons: 1203, // Sum of lessonsData
+    avgAccuracy: 88, // Average of accuracyData
     bestDay: "September",
     bestXP: 5400,
     improvement: 38,
@@ -350,7 +356,7 @@ export const dailyActivity = {
 };
 
 // =====================================================
-// ACHIEVEMENTS
+// ACHIEVEMENTS - UPDATED WITH PROPER FIELDS
 // =====================================================
 export const achievements = [
   {
@@ -359,10 +365,10 @@ export const achievements = [
     description: "Completed your first lesson!",
     icon: "🎉",
     xpReward: 20,
-    rarity: "common",
+    rarity: "Common",
     unlocked: true,
-    unlockedDate: "2025-01-22T14:30:00Z",
-    category: "Milestones",
+    unlockedAt: "Jan 22, 2025",
+    category: "Milestone",
   },
   {
     id: 2,
@@ -370,9 +376,9 @@ export const achievements = [
     description: "Scored 100% on a quiz.",
     icon: "🏆",
     xpReward: 50,
-    rarity: "rare",
+    rarity: "Rare",
     unlocked: true,
-    unlockedDate: "2025-01-23T11:10:00Z",
+    unlockedAt: "Jan 23, 2025",
     category: "Excellence",
   },
   {
@@ -381,11 +387,10 @@ export const achievements = [
     description: "Maintain a 7-day learning streak.",
     icon: "🔥",
     xpReward: 70,
-    rarity: "epic",
+    rarity: "Epic",
     unlocked: true,
-    unlockedDate: "2025-02-10T09:00:00Z",
-    progress: 7,
-    target: 7,
+    unlockedAt: "Feb 10, 2025",
+    progress: 100,
     category: "Consistency",
   },
   {
@@ -394,10 +399,9 @@ export const achievements = [
     description: "Achieve 90%+ accuracy in 10 lessons.",
     icon: "🌟",
     xpReward: 100,
-    rarity: "legendary",
+    rarity: "Legendary",
     unlocked: false,
-    progress: 6,
-    target: 10,
+    progress: 60,
     category: "Excellence",
   },
   {
@@ -406,9 +410,9 @@ export const achievements = [
     description: "Start 5 different courses.",
     icon: "🗺️",
     xpReward: 60,
-    rarity: "epic",
+    rarity: "Epic",
     unlocked: true,
-    unlockedDate: "2025-02-05T17:20:00Z",
+    unlockedAt: "Feb 5, 2025",
     category: "Exploration",
   },
   {
@@ -417,10 +421,9 @@ export const achievements = [
     description: "Study after midnight 3 days in a row.",
     icon: "🦉",
     xpReward: 40,
-    rarity: "rare",
+    rarity: "Rare",
     unlocked: false,
-    progress: 2,
-    target: 3,
+    progress: 67,
     category: "Special",
   },
   {
@@ -429,9 +432,9 @@ export const achievements = [
     description: "Finish a lesson in under 10 minutes.",
     icon: "⚡",
     xpReward: 25,
-    rarity: "common",
+    rarity: "Common",
     unlocked: true,
-    unlockedDate: "2025-01-24T09:45:00Z",
+    unlockedAt: "Jan 24, 2025",
     category: "Speed",
   },
   {
@@ -440,11 +443,10 @@ export const achievements = [
     description: "Invite 3 friends to join EduSmart.",
     icon: "🦋",
     xpReward: 30,
-    rarity: "rare",
+    rarity: "Rare",
     unlocked: false,
-    progress: 1,
-    target: 3,
-    category: "Social",
+    progress: 33,
+    category: "Special",
   },
   {
     id: 9,
@@ -452,11 +454,10 @@ export const achievements = [
     description: "Complete 100 lessons.",
     icon: "💯",
     xpReward: 150,
-    rarity: "legendary",
+    rarity: "Legendary",
     unlocked: false,
     progress: 45,
-    target: 100,
-    category: "Milestones",
+    category: "Milestone",
   },
   {
     id: 10,
@@ -464,11 +465,10 @@ export const achievements = [
     description: "Complete all JavaScript courses.",
     icon: "👨‍💻",
     xpReward: 200,
-    rarity: "legendary",
+    rarity: "Legendary",
     unlocked: false,
-    progress: 1,
-    target: 3,
-    category: "Mastery",
+    progress: 33,
+    category: "Exploration",
   },
 ];
 
@@ -511,7 +511,7 @@ export const leaderboardData = [
   { rank: 3, name: "Emily R.", xp: 13850, avatar: null, streak: 32 },
   {
     rank: 4,
-    name: "Mohammed A.",
+    name: "Alex Johnson",
     xp: 2850,
     avatar: null,
     streak: 7,

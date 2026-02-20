@@ -32,6 +32,63 @@ import {
 } from "lucide-react";
 import { useUser } from "../context/UserContext";
 
+// Custom Tooltip Components for Dark Mode Fix
+const CustomTooltip = ({ active, payload, label }) => {
+  if (active && payload && payload.length) {
+    return (
+      <div className="bg-card border border-border rounded-xl p-3 shadow-lg">
+        <p className="text-sm font-bold text-foreground mb-2">{label}</p>
+        {payload.map((entry, index) => (
+          <p key={index} className="text-sm text-foreground">
+            <span className="font-semibold">{entry.name}:</span>{" "}
+            <span className="font-bold" style={{ color: entry.color }}>
+              {entry.value}
+            </span>
+          </p>
+        ))}
+      </div>
+    );
+  }
+  return null;
+};
+
+const CustomPieTooltip = ({ active, payload }) => {
+  if (active && payload && payload.length) {
+    return (
+      <div className="bg-card border border-border rounded-xl p-3 shadow-lg">
+        <p className="text-sm font-bold text-foreground">{payload[0].name}</p>
+        <p className="text-sm text-foreground">
+          Progress:{" "}
+          <span
+            className="font-bold"
+            style={{ color: payload[0].payload.color }}
+          >
+            {payload[0].value}%
+          </span>
+        </p>
+      </div>
+    );
+  }
+  return null;
+};
+
+const CustomRadarTooltip = ({ active, payload }) => {
+  if (active && payload && payload.length) {
+    return (
+      <div className="bg-card border border-border rounded-xl p-3 shadow-lg">
+        <p className="text-sm font-bold text-foreground">
+          {payload[0].payload.subject}
+        </p>
+        <p className="text-sm text-foreground">
+          Proficiency:{" "}
+          <span className="font-bold text-primary">{payload[0].value}/100</span>
+        </p>
+      </div>
+    );
+  }
+  return null;
+};
+
 const AnalyticsCharts = () => {
   const { user } = useUser();
   const [timeRange, setTimeRange] = useState("week"); // week, month, year
@@ -107,6 +164,11 @@ const AnalyticsCharts = () => {
     { value: "month", label: "Month" },
     { value: "year", label: "Year" },
   ];
+
+  // Custom label for Pie Chart
+  const renderCustomLabel = ({ name, value }) => {
+    return `${name}: ${value}%`;
+  };
 
   return (
     <div className="min-h-screen bg-background transition-colors duration-300">
@@ -219,14 +281,7 @@ const AnalyticsCharts = () => {
                   stroke="hsl(var(--muted-foreground))"
                   style={{ fontSize: "12px" }}
                 />
-                <Tooltip
-                  contentStyle={{
-                    backgroundColor: "hsl(var(--card))",
-                    border: "1px solid hsl(var(--border))",
-                    borderRadius: "12px",
-                    color: "hsl(var(--foreground))",
-                  }}
-                />
+                <Tooltip content={<CustomTooltip />} />
                 <Legend />
                 <Line
                   type="monotone"
@@ -273,14 +328,7 @@ const AnalyticsCharts = () => {
                   stroke="hsl(var(--muted-foreground))"
                   style={{ fontSize: "12px" }}
                 />
-                <Tooltip
-                  contentStyle={{
-                    backgroundColor: "hsl(var(--card))",
-                    border: "1px solid hsl(var(--border))",
-                    borderRadius: "12px",
-                    color: "hsl(var(--foreground))",
-                  }}
-                />
+                <Tooltip content={<CustomTooltip />} />
                 <Legend />
                 <Bar
                   dataKey="time"
@@ -291,7 +339,7 @@ const AnalyticsCharts = () => {
             </ResponsiveContainer>
           </motion.div>
 
-          {/* Course Distribution */}
+          {/* Course Distribution - FIXED PIE CHART TOOLTIP */}
           <motion.div
             className="bg-card rounded-2xl p-5 sm:p-6 lg:p-8 border border-border shadow-lg"
             initial={{ opacity: 0, y: 20 }}
@@ -316,7 +364,7 @@ const AnalyticsCharts = () => {
                   cx="50%"
                   cy="50%"
                   labelLine={false}
-                  label={({ name, value }) => `${name}: ${value}%`}
+                  label={renderCustomLabel}
                   outerRadius={100}
                   fill="#8884d8"
                   dataKey="value"
@@ -325,19 +373,12 @@ const AnalyticsCharts = () => {
                     <Cell key={`cell-${index}`} fill={entry.color} />
                   ))}
                 </Pie>
-                <Tooltip
-                  contentStyle={{
-                    backgroundColor: "hsl(var(--card))",
-                    border: "1px solid hsl(var(--border))",
-                    borderRadius: "12px",
-                    color: "hsl(var(--foreground))",
-                  }}
-                />
+                <Tooltip content={<CustomPieTooltip />} />
               </PieChart>
             </ResponsiveContainer>
           </motion.div>
 
-          {/* Skills Radar */}
+          {/* Skills Radar - FIXED TOOLTIP */}
           <motion.div
             className="bg-card rounded-2xl p-5 sm:p-6 lg:p-8 border border-border shadow-lg"
             initial={{ opacity: 0, y: 20 }}
@@ -376,14 +417,7 @@ const AnalyticsCharts = () => {
                   fill="hsl(var(--primary))"
                   fillOpacity={0.6}
                 />
-                <Tooltip
-                  contentStyle={{
-                    backgroundColor: "hsl(var(--card))",
-                    border: "1px solid hsl(var(--border))",
-                    borderRadius: "12px",
-                    color: "hsl(var(--foreground))",
-                  }}
-                />
+                <Tooltip content={<CustomRadarTooltip />} />
               </RadarChart>
             </ResponsiveContainer>
           </motion.div>

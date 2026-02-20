@@ -1,391 +1,897 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useRef, useEffect } from "react";
+import { motion, AnimatePresence } from "framer-motion";
 import {
   Play,
   Pause,
+  SkipForward,
+  SkipBack,
   Volume2,
   VolumeX,
   Maximize,
+  Minimize,
+  CheckCircle2,
+  Clock,
   BookOpen,
+  Award,
+  ChevronRight,
   FileText,
-  Headphones,
-  GraduationCap,
+  Lightbulb,
+  Trophy,
+  Lock,
+  Video,
 } from "lucide-react";
-import Card from "../shared/Card";
-import Button from "../shared/Button";
-import ProgressBar from "../shared/ProgressBar";
-import { lessonsByCourse, courses } from "../../data/mockData";
-import { motion, AnimatePresence } from "framer-motion";
-
-const LevelUpCharacter = ({ show }) => (
-  <AnimatePresence>
-    {show && (
-      <motion.div
-        key="levelup"
-        initial={{ scale: 0.7, opacity: 0, y: 60 }}
-        animate={{ scale: 1, opacity: 1, y: 0 }}
-        exit={{ scale: 0.7, opacity: 0, y: 60 }}
-        transition={{ duration: 0.8, type: "spring" }}
-        className="flex flex-col items-center justify-center my-6 levelup-character"
-      >
-        <GraduationCap
-          size={56}
-          className="text-yellow-400 mb-2 animate-glow"
-        />
-        <div className="rounded-full bg-gradient-to-br from-yellow-400 to-pink-400 w-24 h-24 flex items-center justify-center">
-          <Play size={42} className="text-white animate-bounce" />
-        </div>
-        <div className="mt-3 text-2xl font-bold text-yellow-600 drop-shadow">
-          Level Up!
-        </div>
-        <div className="text-sm text-gray-700 dark:text-gray-300">
-          Congratulations! You advanced a level!
-        </div>
-      </motion.div>
-    )}
-  </AnimatePresence>
-);
+import { toast } from "react-hot-toast";
+import { courses } from "../../data/mockData";
 
 const LessonPlayer = ({ selectedCourseId }) => {
-  // Remove useParams and ignore URL param
-  const effectiveCourseId = selectedCourseId;
-
   const [isPlaying, setIsPlaying] = useState(false);
+  const [isMuted, setIsMuted] = useState(false);
+  const [currentLessonIndex, setCurrentLessonIndex] = useState(0);
+  const [progress, setProgress] = useState(0);
   const [currentTime, setCurrentTime] = useState(0);
-  const [showTranscript, setShowTranscript] = useState(false);
-  const [showLevelUp, setShowLevelUp] = useState(false);
+  const [duration, setDuration] = useState(0);
+  const [showNotes, setShowNotes] = useState(false);
+  const [isFullscreen, setIsFullscreen] = useState(false);
+  const [volume, setVolume] = useState(1);
+  const [showControls, setShowControls] = useState(true);
+  const [controlsTimeout, setControlsTimeout] = useState(null);
+  const [isDragging, setIsDragging] = useState(false);
+  const [completedLessonsState, setCompletedLessonsState] = useState(new Set());
+  const [isCompleting, setIsCompleting] = useState(false);
 
-  const [activeContent, setActiveContent] = useState("video");
-  const handleSetActiveContent = (val) => {
-    setActiveContent(val);
-  };
+  const videoRef = useRef(null);
+  const containerRef = useRef(null);
+  const animationFrameRef = useRef(null);
+  const progressBarRef = useRef(null);
 
-  // For audio controls:
-  const [audioPlaying, setAudioPlaying] = useState(false);
-  const [audioMuted, setAudioMuted] = useState(false);
-  const [audioTime, setAudioTime] = useState(0);
+  // Get course data
+  const course = courses.find((c) => c.id === selectedCourseId);
 
-  const course = courses.find((c) => c.id === effectiveCourseId) || courses[0];
-  const lesson = lessonsByCourse?.[course.id]?.[0];
+  if (!course || !course.lessons || course.lessons.length === 0) {
+    return (
+      <div className="min-h-screen bg-background flex items-center justify-center">
+        <div className="text-center">
+          <div className="w-24 h-24 bg-muted rounded-full flex items-center justify-center mx-auto mb-6">
+            <Video className="w-12 h-12 text-muted-foreground" />
+          </div>
+          <h3 className="text-2xl font-black text-foreground mb-2">
+            No Lessons Available
+          </h3>
+          <p className="text-muted-foreground">
+            This course doesn't have any lessons yet.
+          </p>
+        </div>
+      </div>
+    );
+  }
 
-  const contentTypes = [
-    { id: "video", label: "Video Lesson", icon: Play },
-    { id: "audio", label: "Audio Version", icon: Headphones },
-    { id: "text", label: "Reading Material", icon: FileText },
+  const currentLesson = course.lessons[currentLessonIndex];
+  const totalLessons = course.lessons.length;
+  const completedLessons = course.lessons.filter((l) => l.completed).length;
+
+  // Mock key points
+  const keyPoints = [
+    "Understand the fundamentals of the topic",
+    "Learn practical applications and use cases",
+    "Practice with real-world examples",
+    "Master advanced techniques and patterns",
   ];
 
-  // --- Video controls ---
-  const togglePlayback = () => {
-    setIsPlaying(!isPlaying);
-    if (!isPlaying && lesson) {
-      const interval = setInterval(() => {
-        setCurrentTime((prev) => {
-          if (prev >= lesson.duration * 60) {
-            clearInterval(interval);
-            setIsPlaying(false);
-            setShowLevelUp(true);
-            setTimeout(() => setShowLevelUp(false), 2400);
-            return prev;
+  // Mock notes
+  const notes = [
+    { time: "2:30", text: "Important concept about variables" },
+    { time: "5:45", text: "Remember the scope rules" },
+    { time: "8:15", text: "Practice this example" },
+  ];
+
+  // Stock Video
+  const videoUrl = "/coding.mp4";
+
+  useEffect(() => {
+    let lastUpdateTime = 0;
+    const fps = 30;
+    const interval = 1000 / fps;
+
+    const updateProgress = (timestamp) => {
+      if (videoRef.current && isPlaying && !isDragging) {
+        if (timestamp - lastUpdateTime >= interval) {
+          const current = videoRef.current.currentTime;
+          const total = videoRef.current.duration;
+
+          if (total && !isNaN(total)) {
+            setCurrentTime(current);
+            setDuration(total);
+            setProgress((current / total) * 100);
           }
-          return prev + 1;
-        });
-      }, 1000);
+
+          lastUpdateTime = timestamp;
+        }
+
+        animationFrameRef.current = requestAnimationFrame(updateProgress);
+      }
+    };
+
+    if (isPlaying && !isDragging) {
+      animationFrameRef.current = requestAnimationFrame(updateProgress);
+    }
+
+    return () => {
+      if (animationFrameRef.current) {
+        cancelAnimationFrame(animationFrameRef.current);
+      }
+    };
+  }, [isPlaying, isDragging]);
+
+  // REMOVED - This was causing all lessons to show as completed
+  // useEffect(() => {
+  //   if (currentLesson.completed) {
+  //     setCompletedLessonsState((prev) => new Set(prev).add(currentLesson.id));
+  //   }
+  // }, [currentLesson.id, currentLesson.completed]);
+
+  // Set duration when video metadata loads
+  useEffect(() => {
+    const video = videoRef.current;
+    if (video) {
+      const handleLoadedMetadata = () => {
+        setDuration(video.duration);
+      };
+
+      video.addEventListener("loadedmetadata", handleLoadedMetadata);
+
+      return () => {
+        video.removeEventListener("loadedmetadata", handleLoadedMetadata);
+      };
+    }
+  }, [currentLessonIndex]);
+
+  // Listen for fullscreen changes
+  useEffect(() => {
+    const handleFullscreenChange = () => {
+      setIsFullscreen(!!document.fullscreenElement);
+    };
+
+    document.addEventListener("fullscreenchange", handleFullscreenChange);
+    document.addEventListener("webkitfullscreenchange", handleFullscreenChange);
+    document.addEventListener("mozfullscreenchange", handleFullscreenChange);
+    document.addEventListener("MSFullscreenChange", handleFullscreenChange);
+
+    return () => {
+      document.removeEventListener("fullscreenchange", handleFullscreenChange);
+      document.removeEventListener(
+        "webkitfullscreenchange",
+        handleFullscreenChange,
+      );
+      document.removeEventListener(
+        "mozfullscreenchange",
+        handleFullscreenChange,
+      );
+      document.removeEventListener(
+        "MSFullscreenChange",
+        handleFullscreenChange,
+      );
+    };
+  }, []);
+
+  // Handle mouse movement to show/hide controls in fullscreen
+  const handleMouseMove = () => {
+    setShowControls(true);
+
+    if (controlsTimeout) {
+      clearTimeout(controlsTimeout);
+    }
+
+    if (isFullscreen && isPlaying) {
+      const timeout = setTimeout(() => {
+        setShowControls(false);
+      }, 3000);
+      setControlsTimeout(timeout);
     }
   };
 
+  const handlePlayPause = () => {
+    if (videoRef.current) {
+      if (isPlaying) {
+        videoRef.current.pause();
+      } else {
+        videoRef.current.play();
+      }
+      setIsPlaying(!isPlaying);
+    }
+  };
+
+  const handleVideoClick = () => {
+    handlePlayPause();
+  };
+
+  const handleVideoEnded = () => {
+    setIsPlaying(false);
+    setProgress(100);
+  };
+
+  // Handle progress bar seeking
+  const handleProgressClick = (e) => {
+    if (videoRef.current && progressBarRef.current) {
+      const rect = progressBarRef.current.getBoundingClientRect();
+      const clickX = e.clientX - rect.left;
+      const percentage = Math.max(
+        0,
+        Math.min(100, (clickX / rect.width) * 100),
+      );
+      const newTime = (percentage / 100) * videoRef.current.duration;
+
+      videoRef.current.currentTime = newTime;
+      setCurrentTime(newTime);
+      setProgress(percentage);
+    }
+  };
+
+  // Handle progress bar dragging
+  const handleProgressMouseDown = (e) => {
+    setIsDragging(true);
+    handleProgressClick(e);
+  };
+
+  const handleProgressMouseMove = (e) => {
+    if (isDragging && videoRef.current && progressBarRef.current) {
+      const rect = progressBarRef.current.getBoundingClientRect();
+      const clickX = e.clientX - rect.left;
+      const percentage = Math.max(
+        0,
+        Math.min(100, (clickX / rect.width) * 100),
+      );
+      const newTime = (percentage / 100) * videoRef.current.duration;
+
+      videoRef.current.currentTime = newTime;
+      setCurrentTime(newTime);
+      setProgress(percentage);
+    }
+  };
+
+  const handleProgressMouseUp = () => {
+    setIsDragging(false);
+  };
+
+  // Add global mouse event listeners for dragging
+  useEffect(() => {
+    if (isDragging) {
+      document.addEventListener("mousemove", handleProgressMouseMove);
+      document.addEventListener("mouseup", handleProgressMouseUp);
+
+      return () => {
+        document.removeEventListener("mousemove", handleProgressMouseMove);
+        document.removeEventListener("mouseup", handleProgressMouseUp);
+      };
+    }
+  }, [isDragging]);
+
+  const handleVolumeChange = (e) => {
+    const newVolume = parseFloat(e.target.value);
+    setVolume(newVolume);
+    if (videoRef.current) {
+      videoRef.current.volume = newVolume;
+      setIsMuted(newVolume === 0);
+    }
+  };
+
+  const toggleMute = () => {
+    if (videoRef.current) {
+      const newMutedState = !isMuted;
+      setIsMuted(newMutedState);
+      videoRef.current.muted = newMutedState;
+      if (newMutedState) {
+        setVolume(0);
+      } else {
+        setVolume(1);
+        videoRef.current.volume = 1;
+      }
+    }
+  };
+
+  const toggleFullscreen = () => {
+    if (!document.fullscreenElement) {
+      if (containerRef.current.requestFullscreen) {
+        containerRef.current.requestFullscreen();
+      } else if (containerRef.current.webkitRequestFullscreen) {
+        containerRef.current.webkitRequestFullscreen();
+      } else if (containerRef.current.msRequestFullscreen) {
+        containerRef.current.msRequestFullscreen();
+      }
+    } else {
+      if (document.exitFullscreen) {
+        document.exitFullscreen();
+      } else if (document.webkitExitFullscreen) {
+        document.webkitExitFullscreen();
+      } else if (document.msExitFullscreen) {
+        document.msExitFullscreen();
+      }
+    }
+  };
+
+  const handleNext = () => {
+    if (currentLessonIndex < totalLessons - 1) {
+      setCurrentLessonIndex(currentLessonIndex + 1);
+      setProgress(0);
+      setCurrentTime(0);
+      setIsPlaying(false);
+      if (videoRef.current) {
+        videoRef.current.pause();
+        videoRef.current.currentTime = 0;
+      }
+    } else {
+      toast("You've reached the last lesson!", { icon: "🎉" });
+    }
+  };
+
+  const handlePrevious = () => {
+    if (currentLessonIndex > 0) {
+      setCurrentLessonIndex(currentLessonIndex - 1);
+      setProgress(0);
+      setCurrentTime(0);
+      setIsPlaying(false);
+      if (videoRef.current) {
+        videoRef.current.pause();
+        videoRef.current.currentTime = 0;
+      }
+    }
+  };
+
+  const handleLessonSelect = (index) => {
+    setCurrentLessonIndex(index);
+    setProgress(0);
+    setCurrentTime(0);
+    setIsPlaying(false);
+    if (videoRef.current) {
+      videoRef.current.pause();
+      videoRef.current.currentTime = 0;
+    }
+  };
+
+  const handleComplete = async () => {
+    // Check if already completed
+    if (completedLessonsState.has(currentLesson.id)) {
+      toast("This lesson is already completed!", { icon: "ℹ️" });
+      return;
+    }
+
+    // Check if video watched
+    if (progress < 99) {
+      toast.error("Please watch the entire lesson to complete it!", {
+        icon: "⚠️",
+      });
+      return;
+    }
+
+    // Prevent spam clicking
+    if (isCompleting) return;
+
+    setIsCompleting(true);
+
+    // Simulate API call (replace with actual backend call later)
+    await new Promise((resolve) => setTimeout(resolve, 500));
+
+    // Mark as completed - Fixed to properly add to Set
+    setCompletedLessonsState((prev) => {
+      const newSet = new Set(prev);
+      newSet.add(currentLesson.id);
+      return newSet;
+    });
+
+    toast.success("Lesson completed! +50 XP", { icon: "🎉" });
+
+    setIsCompleting(false);
+  };
+
   const formatTime = (seconds) => {
+    if (isNaN(seconds)) return "0:00";
     const mins = Math.floor(seconds / 60);
     const secs = Math.floor(seconds % 60);
     return `${mins}:${secs.toString().padStart(2, "0")}`;
   };
 
-  useEffect(() => {
-    setActiveContent("video");
-    setAudioPlaying(false);
-    setAudioTime(0);
-    setIsPlaying(false);
-    setCurrentTime(0);
-  }, [effectiveCourseId]);
-
-  // --- Audio controls (simulate playback and mute) ---
-  useEffect(() => {
-    let interval;
-    if (audioPlaying && !audioMuted) {
-      interval = setInterval(() => {
-        setAudioTime((prev) => {
-          if (prev >= lesson.duration * 60) {
-            setAudioPlaying(false);
-            clearInterval(interval);
-            return lesson.duration * 60;
-          }
-          return prev + 1;
-        });
-      }, 1000);
-    }
-    return () => clearInterval(interval);
-    // eslint-disable-next-line
-  }, [audioPlaying, audioMuted, lesson]);
-
-  const handleAudioPlayPause = () => {
-    setAudioPlaying((val) => !val);
-  };
-  const handleAudioMute = () => {
-    setAudioMuted((val) => !val);
-  };
-
-  if (!lesson) {
-    return (
-      <Card className="p-6 text-center bg-gradient-to-br from-white to-blue-50 dark:from-gray-900 dark:to-blue-950">
-        <div className="text-lg font-semibold text-gray-700 dark:text-gray-200">
-          No lessons found for this course.
-        </div>
-      </Card>
-    );
-  }
-
-  // --- Content Views ---
-  const VideoView = (
-    <Card
-      padding="none"
-      className="overflow-hidden bg-gradient-to-br from-blue-50 to-white dark:from-gray-900 dark:to-blue-950"
-    >
-      <div className="relative bg-gray-900 aspect-video flex items-center justify-center min-h-[180px] sm:min-h-0">
-        {/* Video Placeholder */}
-        <div className="absolute inset-0 bg-gradient-to-br from-blue-900 to-purple-900 flex items-center justify-center">
-          <div className="text-white text-center px-3">
-            <Play size={40} className="mx-auto mb-2 sm:mb-4 opacity-50" />
-            <div className="text-base sm:text-lg font-medium">
-              Video Content
-            </div>
-            <div className="text-xs sm:text-sm opacity-75">Play your video</div>
-          </div>
-        </div>
-        {/* Play/Pause Overlay */}
-        <button
-          onClick={togglePlayback}
-          className="absolute inset-0 flex items-center justify-center bg-black bg-opacity-20 hover:bg-opacity-30 transition-opacity z-10"
-        >
-          <div className="bg-white dark:bg-gray-900 bg-opacity-90 dark:bg-opacity-90 rounded-full p-3 sm:p-4 hover:bg-opacity-100 transition-all">
-            {isPlaying ? <Pause size={28} /> : <Play size={28} />}
-          </div>
-        </button>
-        {/* Video Controls */}
-        <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black to-transparent p-2 sm:p-4">
-          <div className="flex flex-wrap items-center gap-2 sm:gap-4 text-white text-xs sm:text-base">
-            <button onClick={togglePlayback}>
-              {isPlaying ? <Pause size={16} /> : <Play size={16} />}
-            </button>
-            <div className="flex-1">
-              <ProgressBar
-                progress={currentTime}
-                max={lesson.duration * 60}
-                color="white"
-                className="bg-white bg-opacity-20"
-              />
-            </div>
-            <span>
-              {formatTime(currentTime)} / {formatTime(lesson.duration * 60)}
-            </span>
-            <button className="hover:text-blue-400">
-              <Volume2 size={16} />
-            </button>
-            <button className="hover:text-blue-400">
-              <Maximize size={16} />
-            </button>
-          </div>
-        </div>
-      </div>
-    </Card>
-  );
-
-  // --- Audio View ---
-  const AudioView = (
-    <Card className="bg-gradient-to-br from-blue-100 via-purple-100 to-white dark:from-gray-900 dark:via-blue-950 dark:to-gray-900 flex flex-col items-center py-12">
-      <div className="flex flex-col items-center">
-        <Headphones
-          size={48}
-          className="text-blue-600 dark:text-blue-200 mb-2"
-        />
-        <div className="text-lg font-semibold text-gray-900 dark:text-yellow-100 mb-2">
-          Audio Version
-        </div>
-        <div className="w-full max-w-lg">
-          {/* Dummy waveform bar */}
-          <div className="h-12 w-full bg-gradient-to-r from-blue-200 via-blue-400 to-indigo-400 rounded-full shadow-inner flex items-center justify-center mb-3">
-            <span className="text-xs text-blue-800 dark:text-white-200 opacity-70 px-3">
-              [Waveform Visualization]
-            </span>
-          </div>
-          {/* Audio controls */}
-          <div className="flex items-center justify-center gap-5 mt-2">
-            <button
-              className="bg-white dark:bg-gray-800 shadow-lg rounded-full p-3 hover:bg-blue-50 dark:hover:bg-blue-900 transition-all"
-              onClick={handleAudioPlayPause}
-              aria-label={audioPlaying ? "Pause audio" : "Play audio"}
-            >
-              {audioPlaying ? (
-                <Pause size={24} className="text-blue-600 dark:text-blue-200" />
-              ) : (
-                <Play size={24} className="text-blue-600 dark:text-blue-200" />
-              )}
-            </button>
-            <span className="text-sm text-gray-800 dark:text-gray-200 font-medium">
-              {formatTime(audioTime)} / {formatTime(lesson.duration * 60)}
-            </span>
-            <button
-              className="bg-white dark:bg-gray-800 shadow-lg rounded-full p-3 hover:bg-blue-50 dark:hover:bg-blue-900 transition-all"
-              onClick={handleAudioMute}
-              aria-label={audioMuted ? "Unmute audio" : "Mute audio"}
-            >
-              {audioMuted ? (
-                <VolumeX
-                  size={20}
-                  className="text-blue-400 dark:text-blue-200"
-                />
-              ) : (
-                <Volume2
-                  size={20}
-                  className="text-blue-400 dark:text-blue-200"
-                />
-              )}
-            </button>
-          </div>
-        </div>
-        <div className="mt-4 text-xs text-gray-500 dark:text-gray-400">
-          Audio lessons coming soon!
-        </div>
-      </div>
-    </Card>
-  );
-
-  // Reading Material View (themed)
-  const ReadingView = (
-    <Card className="bg-gradient-to-br from-yellow-50 via-pink-50 to-white dark:from-gray-900 dark:via-yellow-900 dark:to-gray-900 flex flex-col items-center py-8 px-4">
-      <div className="flex flex-col items-start w-full max-w-2xl">
-        <FileText
-          size={36}
-          className="text-pink-600 dark:text-yellow-300 mb-2"
-        />
-        <div className="text-lg font-semibold text-gray-900 dark:text-yellow-100 mb-2">
-          Reading Material
-        </div>
-        <div className="bg-white dark:bg-gray-800 rounded-xl shadow-inner p-4 w-full text-gray-700 dark:text-gray-200 text-sm leading-relaxed">
-          {lesson.content.transcript}
-        </div>
-      </div>
-      <div className="mt-4 text-xs text-gray-500 dark:text-gray-400">
-        Enjoy a readable version of the lesson!
-      </div>
-    </Card>
-  );
-
-  // Choose which content to render
-  let contentSection = VideoView;
-  if (activeContent === "audio") contentSection = AudioView;
-  if (activeContent === "text") contentSection = ReadingView;
-
   return (
-    <div className="space-y-4 sm:space-y-6 transition-colors duration-500">
-      {/* Animated Level-Up Character */}
-      <LevelUpCharacter show={showLevelUp} />
-
-      {/* Header Info */}
-      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2">
-        <div>
-          <h1 className="text-xl sm:text-2xl font-bold text-gray-900 dark:text-gray-100">
-            {lesson.title}
+    <div className="min-h-screen bg-background transition-colors duration-300">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-4 sm:pt-6 lg:pt-8 pb-8 space-y-6 sm:space-y-8">
+        {/* Header */}
+        <motion.div
+          className="space-y-1"
+          initial={{ opacity: 0, y: -20 }}
+          animate={{ opacity: 1, y: 0 }}
+        >
+          <div className="flex items-center gap-2 text-sm text-muted-foreground mb-2">
+            <BookOpen className="w-4 h-4" />
+            <span>{course.title}</span>
+            <ChevronRight className="w-4 h-4" />
+            <span className="text-foreground font-semibold">
+              Lesson {currentLessonIndex + 1}
+            </span>
+          </div>
+          <h1 className="text-2xl sm:text-3xl lg:text-4xl font-black text-foreground">
+            {currentLesson.title}
           </h1>
-          <p className="text-gray-600 dark:text-gray-300 mt-1 text-sm sm:text-base">
-            {lesson.description}
-          </p>
-        </div>
-        <div className="text-left sm:text-right">
-          <div className="text-xs sm:text-sm text-gray-500 dark:text-gray-300">
-            Duration: {lesson.duration} min
-          </div>
-          <div className="text-xs sm:text-sm text-blue-600 dark:text-yellow-300 font-medium">
-            +{lesson.xpReward} XP
-          </div>
-        </div>
-      </div>
-
-      {/* Content Type Selector */}
-      <div className="flex flex-wrap gap-2 overflow-x-auto">
-        {contentTypes.map((type) => {
-          const Icon = type.icon;
-          const active = activeContent === type.id;
-          return (
-            <button
-              key={type.id}
-              onClick={() => handleSetActiveContent(type.id)}
-              className={`flex items-center space-x-2 px-3 py-1 sm:px-4 sm:py-2 rounded-lg transition-colors text-xs sm:text-base font-medium ${
-                active
-                  ? "bg-blue-100 dark:bg-blue-800 text-blue-700 dark:text-blue-200 shadow"
-                  : "bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700"
-              }`}
-            >
-              <Icon size={16} />
-              <span>{type.label}</span>
-            </button>
-          );
-        })}
-      </div>
-
-      {/* Content Section */}
-      {contentSection}
-
-      {/* Key Points */}
-      <Card className="bg-gradient-to-br from-blue-50 to-white dark:from-gray-900 dark:to-blue-950">
-        <h3 className="text-base sm:text-lg font-semibold mb-3 sm:mb-4 flex items-center text-gray-900 dark:text-gray-100">
-          <BookOpen className="mr-2" size={18} />
-          Key Learning Points
-        </h3>
-        <ul className="space-y-2">
-          {lesson.content.keyPoints.map((point, index) => (
-            <li key={index} className="flex items-start">
-              <div className="w-5 h-5 sm:w-6 sm:h-6 bg-blue-100 dark:bg-blue-900 text-blue-600 dark:text-blue-300 rounded-full flex items-center justify-center text-xs sm:text-sm font-medium mr-2 sm:mr-3 mt-0.5">
-                {index + 1}
+          <div className="flex items-center gap-4 text-sm text-muted-foreground">
+            <div className="flex items-center gap-1">
+              <Clock className="w-4 h-4" />
+              <span>{currentLesson.duration} min</span>
+            </div>
+            <div className="flex items-center gap-1">
+              <Award className="w-4 h-4 text-accent" />
+              <span className="text-accent font-semibold">+50 XP</span>
+            </div>
+            {currentLesson.completed && (
+              <div className="flex items-center gap-1 text-success">
+                <CheckCircle2 className="w-4 h-4" />
+                <span className="font-semibold">Completed</span>
               </div>
-              <span className="text-gray-700 dark:text-gray-200 text-sm sm:text-base">
-                {point}
-              </span>
-            </li>
-          ))}
-        </ul>
-      </Card>
-
-      {/* Transcript Toggle */}
-      <Card className="bg-gradient-to-br from-blue-50 to-white dark:from-gray-900 dark:to-blue-950">
-        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between mb-3 sm:mb-4 gap-2">
-          <h3 className="text-base sm:text-lg font-semibold text-gray-900 dark:text-gray-100">
-            Transcript
-          </h3>
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => setShowTranscript(!showTranscript)}
-          >
-            {showTranscript ? "Hide" : "Show"} Transcript
-          </Button>
-        </div>
-        {showTranscript && (
-          <div className="bg-gray-50 dark:bg-gray-900 p-3 sm:p-4 rounded-lg">
-            <p className="text-gray-700 dark:text-gray-200 leading-relaxed text-sm sm:text-base">
-              {lesson.content.transcript}
-            </p>
+            )}
           </div>
-        )}
-      </Card>
+        </motion.div>
 
-      {/* Action Buttons */}
-      <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-2">
-        <Button variant="outline" className="w-full sm:w-auto mb-2 sm:mb-0">
-          Previous Lesson
-        </Button>
-        <div className="flex flex-col sm:flex-row gap-2 sm:gap-3 w-full sm:w-auto">
-          <Button variant="outline" className="w-full sm:w-auto">
-            Take Notes
-          </Button>
-          <Button className="w-full sm:w-auto">Mark Complete & Continue</Button>
+        <div className="grid lg:grid-cols-3 gap-6 sm:gap-8">
+          {/* Main Content - Video Player */}
+          <div className="lg:col-span-2 space-y-6">
+            {/* Video Player */}
+            <motion.div
+              ref={containerRef}
+              className={`bg-card rounded-2xl overflow-hidden border border-border shadow-lg ${
+                isFullscreen ? "fixed inset-0 z-50 rounded-none" : ""
+              }`}
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.1 }}
+              onMouseMove={handleMouseMove}
+              onMouseLeave={() =>
+                isFullscreen && isPlaying && setShowControls(false)
+              }
+            >
+              {/* Video Container */}
+              <div
+                className={`relative ${isFullscreen ? "h-screen" : "aspect-video"} bg-black`}
+              >
+                <video
+                  ref={videoRef}
+                  className="w-full h-full"
+                  onClick={handleVideoClick}
+                  onEnded={handleVideoEnded}
+                >
+                  <source src={videoUrl} type="video/mp4" />
+                  Your browser does not support the video tag.
+                </video>
+
+                {/* Play Overlay - Only show when paused */}
+                <AnimatePresence>
+                  {!isPlaying && (
+                    <motion.div
+                      initial={{ opacity: 0 }}
+                      animate={{ opacity: 1 }}
+                      exit={{ opacity: 0 }}
+                      className="absolute inset-0 flex items-center justify-center bg-black/20 cursor-pointer"
+                      onClick={handleVideoClick}
+                    >
+                      <motion.div
+                        className="w-20 h-20 bg-primary rounded-full flex items-center justify-center shadow-xl"
+                        whileHover={{ scale: 1.1 }}
+                        whileTap={{ scale: 0.9 }}
+                      >
+                        <Play className="w-10 h-10 text-primary-foreground ml-1" />
+                      </motion.div>
+                    </motion.div>
+                  )}
+                </AnimatePresence>
+
+                {/* Fullscreen Controls Overlay */}
+                {isFullscreen && (
+                  <AnimatePresence>
+                    {showControls && (
+                      <motion.div
+                        initial={{ opacity: 0 }}
+                        animate={{ opacity: 1 }}
+                        exit={{ opacity: 0 }}
+                        className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-black/40 pointer-events-none"
+                      >
+                        {/* Top bar - Title only, no button */}
+                        <div className="absolute top-0 left-0 right-0 p-4 flex justify-between items-center pointer-events-auto">
+                          <div className="text-white">
+                            <h3 className="text-lg font-bold">
+                              {currentLesson.title}
+                            </h3>
+                            <p className="text-sm text-white/80">
+                              {course.title}
+                            </p>
+                          </div>
+                        </div>
+                      </motion.div>
+                    )}
+                  </AnimatePresence>
+                )}
+              </div>
+
+              {/* Controls - Show/hide based on fullscreen state */}
+              <AnimatePresence>
+                {(!isFullscreen || showControls) && (
+                  <motion.div
+                    initial={
+                      isFullscreen ? { y: 100, opacity: 0 } : { opacity: 1 }
+                    }
+                    animate={{ y: 0, opacity: 1 }}
+                    exit={{ y: 100, opacity: 0 }}
+                    className={`${isFullscreen ? "absolute bottom-0 left-0 right-0 bg-black/80 backdrop-blur-sm" : ""} p-4 space-y-4`}
+                  >
+                    {/* Progress Bar */}
+                    <div className="space-y-2">
+                      <div
+                        ref={progressBarRef}
+                        className="h-2 bg-muted/50 rounded-full overflow-hidden cursor-pointer group relative"
+                        onMouseDown={handleProgressMouseDown}
+                      >
+                        <div
+                          className="h-full bg-gradient-to-r from-primary to-accent relative"
+                          style={{ width: `${progress}%` }}
+                        >
+                          {/* Draggable progress indicator dot */}
+                          <div
+                            className={`absolute right-0 top-1/2 -translate-y-1/2 w-3 h-3 bg-white rounded-full shadow-lg transition-opacity ${
+                              isDragging
+                                ? "opacity-100 scale-125"
+                                : "opacity-0 group-hover:opacity-100"
+                            }`}
+                            style={{ cursor: "grab" }}
+                          />
+                        </div>
+                      </div>
+                      <div
+                        className={`flex justify-between text-xs ${isFullscreen ? "text-white/80" : "text-muted-foreground"}`}
+                      >
+                        <span>{formatTime(currentTime)}</span>
+                        <span>{formatTime(duration)}</span>
+                      </div>
+                    </div>
+
+                    {/* Control Buttons */}
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-2">
+                        {/* LEFT SIDE - Previous, Play, Next, VOLUME (in fullscreen) */}
+                        <button
+                          onClick={handlePrevious}
+                          disabled={currentLessonIndex === 0}
+                          className={`w-10 h-10 rounded-xl ${
+                            isFullscreen
+                              ? "bg-white/20 hover:bg-white/30 text-white"
+                              : "bg-muted hover:bg-muted/80 text-foreground"
+                          } disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center transition-all`}
+                        >
+                          <SkipBack className="w-5 h-5" />
+                        </button>
+
+                        <button
+                          onClick={handlePlayPause}
+                          className={`w-12 h-12 rounded-xl ${
+                            isFullscreen
+                              ? "bg-white/30 hover:bg-white/40"
+                              : "bg-primary hover:bg-primary/90"
+                          } flex items-center justify-center transition-all shadow-md`}
+                        >
+                          {isPlaying ? (
+                            <Pause
+                              className={`w-6 h-6 ${isFullscreen ? "text-white" : "text-primary-foreground"}`}
+                            />
+                          ) : (
+                            <Play
+                              className={`w-6 h-6 ${isFullscreen ? "text-white" : "text-primary-foreground"} ml-0.5`}
+                            />
+                          )}
+                        </button>
+
+                        <button
+                          onClick={handleNext}
+                          disabled={currentLessonIndex === totalLessons - 1}
+                          className={`w-10 h-10 rounded-xl ${
+                            isFullscreen
+                              ? "bg-white/20 hover:bg-white/30 text-white"
+                              : "bg-muted hover:bg-muted/80 text-foreground"
+                          } disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center transition-all`}
+                        >
+                          <SkipForward className="w-5 h-5" />
+                        </button>
+
+                        {/* Volume controls in fullscreen */}
+                        {isFullscreen && (
+                          <>
+                            <button
+                              onClick={toggleMute}
+                              className="w-10 h-10 rounded-xl bg-white/20 hover:bg-white/30 text-white flex items-center justify-center transition-all"
+                            >
+                              {isMuted || volume === 0 ? (
+                                <VolumeX className="w-5 h-5" />
+                              ) : (
+                                <Volume2 className="w-5 h-5" />
+                              )}
+                            </button>
+
+                            <input
+                              type="range"
+                              min="0"
+                              max="1"
+                              step="0.1"
+                              value={volume}
+                              onChange={handleVolumeChange}
+                              className="w-20 h-1 rounded-lg appearance-none cursor-pointer accent-primary bg-white/30"
+                            />
+                          </>
+                        )}
+                      </div>
+
+                      <div className="flex items-center gap-2">
+                        {/* RIGHT SIDE - Volume (non-fullscreen), Fullscreen */}
+                        {!isFullscreen && (
+                          <>
+                            <button
+                              onClick={toggleMute}
+                              className="w-10 h-10 rounded-xl bg-muted hover:bg-muted/80 flex items-center justify-center transition-all text-foreground"
+                            >
+                              {isMuted || volume === 0 ? (
+                                <VolumeX className="w-5 h-5" />
+                              ) : (
+                                <Volume2 className="w-5 h-5" />
+                              )}
+                            </button>
+
+                            <input
+                              type="range"
+                              min="0"
+                              max="1"
+                              step="0.1"
+                              value={volume}
+                              onChange={handleVolumeChange}
+                              className="w-20 h-1 rounded-lg appearance-none cursor-pointer accent-primary hidden sm:block bg-muted"
+                            />
+                          </>
+                        )}
+
+                        <button
+                          onClick={toggleFullscreen}
+                          className={`w-10 h-10 rounded-xl ${
+                            isFullscreen
+                              ? "bg-white/20 hover:bg-white/30 text-white"
+                              : "bg-muted hover:bg-muted/80 text-foreground"
+                          } flex items-center justify-center transition-all`}
+                        >
+                          {isFullscreen ? (
+                            <Minimize className="w-5 h-5" />
+                          ) : (
+                            <Maximize className="w-5 h-5" />
+                          )}
+                        </button>
+                      </div>
+                    </div>
+                  </motion.div>
+                )}
+              </AnimatePresence>
+            </motion.div>
+
+            {/* Tabs - Key Points & Notes */}
+            <motion.div
+              className="bg-card rounded-2xl p-6 border border-border shadow-lg"
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.2 }}
+            >
+              {/* Tab Headers */}
+              <div className="flex gap-2 mb-6 border-b border-border">
+                <button
+                  onClick={() => setShowNotes(false)}
+                  className={`px-4 py-2 font-semibold text-sm transition-all duration-300 border-b-2 ${
+                    !showNotes
+                      ? "border-primary text-primary"
+                      : "border-transparent text-muted-foreground hover:text-foreground"
+                  }`}
+                >
+                  <div className="flex items-center gap-2">
+                    <Lightbulb className="w-4 h-4" />
+                    Key Points
+                  </div>
+                </button>
+                <button
+                  onClick={() => setShowNotes(true)}
+                  className={`px-4 py-2 font-semibold text-sm transition-all duration-300 border-b-2 ${
+                    showNotes
+                      ? "border-primary text-primary"
+                      : "border-transparent text-muted-foreground hover:text-foreground"
+                  }`}
+                >
+                  <div className="flex items-center gap-2">
+                    <FileText className="w-4 h-4" />
+                    Notes ({notes.length})
+                  </div>
+                </button>
+              </div>
+
+              {/* Tab Content */}
+              <AnimatePresence mode="wait">
+                {!showNotes ? (
+                  <motion.div
+                    key="keypoints"
+                    initial={{ opacity: 0, x: -20 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    exit={{ opacity: 0, x: 20 }}
+                    className="space-y-3"
+                  >
+                    {keyPoints.map((point, index) => (
+                      <div
+                        key={index}
+                        className="flex items-start gap-3 p-3 rounded-xl bg-muted/50 hover:bg-muted transition-colors"
+                      >
+                        <div className="w-6 h-6 rounded-full bg-primary/10 flex items-center justify-center flex-shrink-0 mt-0.5">
+                          <CheckCircle2 className="w-4 h-4 text-primary" />
+                        </div>
+                        <p className="text-sm text-foreground flex-1">
+                          {point}
+                        </p>
+                      </div>
+                    ))}
+                  </motion.div>
+                ) : (
+                  <motion.div
+                    key="notes"
+                    initial={{ opacity: 0, x: 20 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    exit={{ opacity: 0, x: -20 }}
+                    className="space-y-3"
+                  >
+                    {notes.map((note, index) => (
+                      <div
+                        key={index}
+                        className="flex items-start gap-3 p-3 rounded-xl bg-muted/50 hover:bg-muted transition-colors"
+                      >
+                        <div className="px-2 py-1 rounded-lg bg-accent/10 flex-shrink-0">
+                          <span className="text-xs font-bold text-accent">
+                            {note.time}
+                          </span>
+                        </div>
+                        <p className="text-sm text-foreground flex-1">
+                          {note.text}
+                        </p>
+                      </div>
+                    ))}
+                  </motion.div>
+                )}
+              </AnimatePresence>
+            </motion.div>
+
+            {/* Complete Lesson Button */}
+            <motion.button
+              onClick={handleComplete}
+              disabled={
+                (progress < 99 &&
+                  !completedLessonsState.has(currentLesson.id)) ||
+                isCompleting
+              }
+              className={`w-full px-6 py-4 rounded-2xl font-bold transition-all duration-300 shadow-md flex items-center justify-center gap-2 ${
+                completedLessonsState.has(currentLesson.id)
+                  ? "bg-success/20 text-success border-2 border-success cursor-default"
+                  : progress >= 99
+                    ? "bg-success text-white hover:bg-success/90 cursor-pointer"
+                    : "bg-muted text-muted-foreground cursor-not-allowed opacity-60"
+              }`}
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.3 }}
+              whileHover={
+                progress >= 99 && !completedLessonsState.has(currentLesson.id)
+                  ? { scale: 1.02 }
+                  : {}
+              }
+              whileTap={
+                progress >= 99 && !completedLessonsState.has(currentLesson.id)
+                  ? { scale: 0.98 }
+                  : {}
+              }
+            >
+              {isCompleting ? (
+                <>
+                  <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                  Completing...
+                </>
+              ) : completedLessonsState.has(currentLesson.id) ? (
+                <>
+                  <CheckCircle2 className="w-5 h-5" />
+                  Lesson Completed
+                </>
+              ) : (
+                <>
+                  <Trophy className="w-5 h-5" />
+                  Complete Lesson & Earn 50 XP
+                </>
+              )}
+            </motion.button>
+          </div>
+
+          {/* Sidebar - Lesson List */}
+          <div className="lg:col-span-1">
+            <motion.div
+              className="bg-card rounded-2xl p-6 border border-border shadow-lg sticky top-24"
+              initial={{ opacity: 0, x: 20 }}
+              animate={{ opacity: 1, x: 0 }}
+              transition={{ delay: 0.2 }}
+            >
+              {/* Header */}
+              <div className="mb-6">
+                <h3 className="text-lg font-black text-foreground mb-2">
+                  Course Lessons
+                </h3>
+                <div className="flex items-center justify-between text-sm">
+                  <span className="text-muted-foreground">
+                    {completedLessons}/{totalLessons} completed
+                  </span>
+                  <span className="text-primary font-bold">
+                    {Math.round((completedLessons / totalLessons) * 100)}%
+                  </span>
+                </div>
+                <div className="h-2 bg-muted rounded-full overflow-hidden mt-2">
+                  <div
+                    className="h-full bg-gradient-to-r from-primary to-accent rounded-full"
+                    style={{
+                      width: `${(completedLessons / totalLessons) * 100}%`,
+                    }}
+                  />
+                </div>
+              </div>
+
+              {/* Lesson List */}
+              <div className="space-y-2 max-h-[600px] overflow-y-auto pr-2 custom-scrollbar">
+                {course.lessons.map((lesson, index) => (
+                  <motion.button
+                    key={lesson.id}
+                    onClick={() => handleLessonSelect(index)}
+                    className={`w-full text-left p-4 rounded-xl transition-all duration-300 ${
+                      index === currentLessonIndex
+                        ? "bg-primary/10 border-2 border-primary/30"
+                        : "bg-muted/50 hover:bg-muted border-2 border-transparent"
+                    }`}
+                    whileHover={{ x: 4 }}
+                    whileTap={{ scale: 0.98 }}
+                  >
+                    <div className="flex items-start gap-3">
+                      <div
+                        className={`w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0 ${
+                          lesson.completed
+                            ? "bg-success text-white"
+                            : index === currentLessonIndex
+                              ? "bg-primary text-primary-foreground"
+                              : "bg-muted text-muted-foreground"
+                        }`}
+                      >
+                        {lesson.completed ? (
+                          <CheckCircle2 className="w-5 h-5" />
+                        ) : index > currentLessonIndex ? (
+                          <Lock className="w-4 h-4" />
+                        ) : (
+                          <span className="text-sm font-bold">{index + 1}</span>
+                        )}
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <h4 className="font-semibold text-foreground text-sm mb-1 line-clamp-2">
+                          {lesson.title}
+                        </h4>
+                        <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                          <Clock className="w-3 h-3" />
+                          <span>{lesson.duration} min</span>
+                          {lesson.completed && (
+                            <>
+                              <span>•</span>
+                              <span className="text-success font-semibold">
+                                Done
+                              </span>
+                            </>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+                  </motion.button>
+                ))}
+              </div>
+            </motion.div>
+          </div>
         </div>
       </div>
     </div>
