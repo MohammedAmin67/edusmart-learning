@@ -125,7 +125,7 @@ const Header = ({ onMenuToggle, setActiveTab, setSelectedCourseId }) => {
 
   return (
     <header className="sticky top-0 z-30 bg-card border-b border-border backdrop-blur-sm bg-card/95">
-      <div className="flex items-center justify-between h-16 px-4 sm:px-6">
+      <div className="flex items-center justify-between h-16 py-10 px-4 sm:px-6">
         {/* Left Section */}
         <div className="flex items-center gap-4">
           <button

@@ -14,7 +14,7 @@ import {
 } from "lucide-react";
 import { toast } from "react-hot-toast";
 import { useNavigate } from "react-router-dom";
-import OTPVerificationModal from "./OTPVerificationModal";
+import authService from "../../services/authService";
 
 const SignUpPage = ({ onSignUp, onBack }) => {
   const navigate = useNavigate();
@@ -23,14 +23,13 @@ const SignUpPage = ({ onSignUp, onBack }) => {
     email: "",
     password: "",
     confirmPassword: "",
-    role: "student", // student or faculty
-    department: "", // Only for faculty
-    studentId: "", // Only for students
+    role: "student",
+    department: "",
+    studentId: "",
   });
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
-  const [showOTPModal, setShowOTPModal] = useState(false);
-  const [pendingUser, setPendingUser] = useState(null);
+  const [isLoading, setIsLoading] = useState(false);
 
   const handleChange = (e) => {
     setFormData({
@@ -75,61 +74,55 @@ const SignUpPage = ({ onSignUp, onBack }) => {
       return;
     }
 
-    // Email validation
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     if (!emailRegex.test(formData.email)) {
       toast.error("Please enter a valid email address");
       return;
     }
 
-    // Create pending user object
-    const user = {
-      id: Date.now(),
-      name: formData.name,
-      email: formData.email,
-      role: formData.role,
-      ...(formData.role === "student" ? { studentId: formData.studentId } : {}),
-      ...(formData.role === "faculty"
-        ? { department: formData.department }
-        : {}),
-      createdAt: new Date().toISOString(),
-    };
+    setIsLoading(true);
 
-    setPendingUser(user);
+    try {
+      // Call backend signup API
+      const response = await authService.register({
+        name: formData.name,
+        email: formData.email,
+        password: formData.password,
+        role: formData.role,
+        ...(formData.role === "student"
+          ? { studentId: formData.studentId }
+          : {}),
+        ...(formData.role === "faculty"
+          ? { department: formData.department }
+          : {}),
+      });
 
-    // Mock sending OTP (replace with actual API call)
-    // API: await fetch('/api/auth/send-otp', { email: formData.email })
-    toast.promise(
-      new Promise((resolve) => {
-        setTimeout(() => {
-          resolve("OTP sent successfully!");
-          setShowOTPModal(true);
-        }, 1500);
-      }),
-      {
-        loading: "Sending OTP to your email...",
-        success: "OTP sent! Check your email 📧",
-        error: "Failed to send OTP",
-      },
-    );
-  };
+      if (!response.user) {
+        toast.error("Registration failed");
+        setIsLoading(false);
+        return;
+      }
 
-  const handleOTPVerify = () => {
-    setShowOTPModal(false);
+      toast.success(
+        `Account created successfully! Welcome ${response.user.role === "faculty" ? "Professor" : "Student"} ${response.user.name}! 🎉`,
+      );
 
-    // Store verified user
-    localStorage.setItem("user", JSON.stringify(pendingUser));
+      onSignUp(response.user);
 
-    toast.success(
-      `Account created successfully! Welcome ${pendingUser.role === "faculty" ? "Professor" : "Student"} ${pendingUser.name}! 🎉`,
-    );
-    onSignUp(pendingUser);
-
-    // Navigate based on role
-    if (pendingUser.role === "faculty") {
-      navigate("/faculty/dashboard");
-    } else {
-      navigate("/dashboard");
+      // Navigate based on role
+      setTimeout(() => {
+        if (response.user.role === "faculty") {
+          navigate("/faculty/dashboard");
+        } else {
+          navigate("/dashboard");
+        }
+      }, 100);
+    } catch (error) {
+      console.error("Signup error:", error);
+      const errorMessage =
+        error.msg || "Registration failed. Please try again.";
+      toast.error(errorMessage);
+      setIsLoading(false);
     }
   };
 
@@ -199,10 +192,10 @@ const SignUpPage = ({ onSignUp, onBack }) => {
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.6 }}
         >
-          {/* Back Button */}
           <button
             onClick={onBack}
             className="flex items-center gap-2 text-muted-foreground hover:text-foreground transition-colors mb-6"
+            disabled={isLoading}
           >
             <ChevronLeft className="w-5 h-5" />
             <span className="text-sm font-semibold">Back</span>
@@ -217,11 +210,12 @@ const SignUpPage = ({ onSignUp, onBack }) => {
             <button
               type="button"
               onClick={() => handleRoleSelect("student")}
+              disabled={isLoading}
               className={`p-4 rounded-xl border-2 transition-all ${
                 formData.role === "student"
                   ? "bg-primary/10 border-primary"
                   : "bg-muted/50 border-transparent hover:border-primary/30"
-              }`}
+              } ${isLoading ? "opacity-50 cursor-not-allowed" : ""}`}
             >
               <GraduationCap
                 className={`w-8 h-8 mx-auto mb-2 ${
@@ -236,11 +230,12 @@ const SignUpPage = ({ onSignUp, onBack }) => {
             <button
               type="button"
               onClick={() => handleRoleSelect("faculty")}
+              disabled={isLoading}
               className={`p-4 rounded-xl border-2 transition-all ${
                 formData.role === "faculty"
                   ? "bg-accent/10 border-accent"
                   : "bg-muted/50 border-transparent hover:border-accent/30"
-              }`}
+              } ${isLoading ? "opacity-50 cursor-not-allowed" : ""}`}
             >
               <Shield
                 className={`w-8 h-8 mx-auto mb-2 ${
@@ -267,7 +262,8 @@ const SignUpPage = ({ onSignUp, onBack }) => {
                   value={formData.name}
                   onChange={handleChange}
                   placeholder="Enter your full name"
-                  className="w-full pl-11 pr-4 py-3 bg-muted rounded-xl border border-border text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary"
+                  disabled={isLoading}
+                  className="w-full pl-11 pr-4 py-3 bg-muted rounded-xl border border-border text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary disabled:opacity-50"
                   required
                 />
               </div>
@@ -286,13 +282,14 @@ const SignUpPage = ({ onSignUp, onBack }) => {
                   value={formData.email}
                   onChange={handleChange}
                   placeholder="your.email@example.com"
-                  className="w-full pl-11 pr-4 py-3 bg-muted rounded-xl border border-border text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary"
+                  disabled={isLoading}
+                  className="w-full pl-11 pr-4 py-3 bg-muted rounded-xl border border-border text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary disabled:opacity-50"
                   required
                 />
               </div>
             </div>
 
-            {/* Conditional Fields based on Role */}
+            {/* Conditional Fields */}
             {formData.role === "student" && (
               <div>
                 <label className="block text-sm font-semibold text-foreground mb-2">
@@ -304,7 +301,8 @@ const SignUpPage = ({ onSignUp, onBack }) => {
                   value={formData.studentId}
                   onChange={handleChange}
                   placeholder="e.g., STU2024001"
-                  className="w-full px-4 py-3 bg-muted rounded-xl border border-border text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary"
+                  disabled={isLoading}
+                  className="w-full px-4 py-3 bg-muted rounded-xl border border-border text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary disabled:opacity-50"
                   required
                 />
               </div>
@@ -319,7 +317,8 @@ const SignUpPage = ({ onSignUp, onBack }) => {
                   name="department"
                   value={formData.department}
                   onChange={handleChange}
-                  className="w-full px-4 py-3 bg-muted rounded-xl border border-border text-foreground focus:outline-none focus:ring-2 focus:ring-primary"
+                  disabled={isLoading}
+                  className="w-full px-4 py-3 bg-muted rounded-xl border border-border text-foreground focus:outline-none focus:ring-2 focus:ring-primary disabled:opacity-50"
                   required
                 >
                   <option value="">Select Department</option>
@@ -345,13 +344,15 @@ const SignUpPage = ({ onSignUp, onBack }) => {
                   value={formData.password}
                   onChange={handleChange}
                   placeholder="Create a strong password"
-                  className="w-full pl-11 pr-11 py-3 bg-muted rounded-xl border border-border text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary"
+                  disabled={isLoading}
+                  className="w-full pl-11 pr-11 py-3 bg-muted rounded-xl border border-border text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary disabled:opacity-50"
                   required
                 />
                 <button
                   type="button"
                   onClick={() => setShowPassword(!showPassword)}
-                  className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+                  disabled={isLoading}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground disabled:opacity-50"
                 >
                   {showPassword ? (
                     <EyeOff className="w-5 h-5" />
@@ -375,13 +376,15 @@ const SignUpPage = ({ onSignUp, onBack }) => {
                   value={formData.confirmPassword}
                   onChange={handleChange}
                   placeholder="Re-enter your password"
-                  className="w-full pl-11 pr-11 py-3 bg-muted rounded-xl border border-border text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary"
+                  disabled={isLoading}
+                  className="w-full pl-11 pr-11 py-3 bg-muted rounded-xl border border-border text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary disabled:opacity-50"
                   required
                 />
                 <button
                   type="button"
                   onClick={() => setShowConfirmPassword(!showConfirmPassword)}
-                  className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+                  disabled={isLoading}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground disabled:opacity-50"
                 >
                   {showConfirmPassword ? (
                     <EyeOff className="w-5 h-5" />
@@ -395,11 +398,21 @@ const SignUpPage = ({ onSignUp, onBack }) => {
             {/* Submit Button */}
             <button
               type="submit"
-              className="w-full px-6 py-3 bg-gradient-to-r from-primary to-accent text-white rounded-xl font-bold hover:opacity-90 transition-all shadow-lg flex items-center justify-center gap-2 mt-6"
+              disabled={isLoading}
+              className="w-full px-6 py-3 bg-gradient-to-r from-primary to-accent text-white rounded-xl font-bold hover:opacity-90 transition-all shadow-lg flex items-center justify-center gap-2 mt-6 disabled:opacity-50 disabled:cursor-not-allowed"
             >
-              Create {formData.role === "faculty" ? "Faculty" : "Student"}{" "}
-              Account
-              <ArrowRight className="w-5 h-5" />
+              {isLoading ? (
+                <>
+                  <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                  Creating Account...
+                </>
+              ) : (
+                <>
+                  Create {formData.role === "faculty" ? "Faculty" : "Student"}{" "}
+                  Account
+                  <ArrowRight className="w-5 h-5" />
+                </>
+              )}
             </button>
           </form>
 
@@ -408,21 +421,14 @@ const SignUpPage = ({ onSignUp, onBack }) => {
             Already have an account?{" "}
             <button
               onClick={() => navigate("/login")}
-              className="text-primary font-bold hover:underline"
+              disabled={isLoading}
+              className="text-primary font-bold hover:underline disabled:opacity-50"
             >
               Login here
             </button>
           </p>
         </motion.div>
       </div>
-
-      {/* OTP Modal */}
-      <OTPVerificationModal
-        isOpen={showOTPModal}
-        onClose={() => setShowOTPModal(false)}
-        email={formData.email}
-        onVerify={handleOTPVerify}
-      />
     </div>
   );
 };
