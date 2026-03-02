@@ -5,7 +5,6 @@ import {
   Lock,
   Eye,
   EyeOff,
-  ArrowRight,
   Shield,
   GraduationCap,
   ChevronLeft,
@@ -13,25 +12,20 @@ import {
 } from "lucide-react";
 import { toast } from "react-hot-toast";
 import { useNavigate } from "react-router-dom";
-import OTPVerificationModal from "./OTPVerificationModal";
+import authService from "../../services/authService";
 
 const LoginPage = ({ onLogin, onBack, onGoToSignUp }) => {
   const navigate = useNavigate();
   const [formData, setFormData] = useState({
     email: "",
     password: "",
-    role: "student", // Default to student
+    role: "student",
   });
   const [showPassword, setShowPassword] = useState(false);
-  const [showOTPModal, setShowOTPModal] = useState(false);
-  const [pendingUser, setPendingUser] = useState(null);
-  const [requiresOTP, setRequiresOTP] = useState(false);
   const [rememberMe, setRememberMe] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
 
-  // Load remembered user on component mount (email and role only, NOT auto-login)
   useEffect(() => {
-    // Clear the logged out flag when coming to login page
     sessionStorage.removeItem("loggedOut");
 
     const rememberedUser = localStorage.getItem("rememberedUser");
@@ -65,56 +59,20 @@ const LoginPage = ({ onLogin, onBack, onGoToSignUp }) => {
     });
   };
 
-  const validateCredentials = async (email, password, role) => {
-    // Mock credential validation
-    // In production, this would call your backend API
-
-    // Demo credentials for testing
-    const validCredentials = {
-      student: {
-        email: "student@test.com",
-        password: "student123",
-      },
-      faculty: {
-        email: "faculty@test.com",
-        password: "faculty123",
-      },
-    };
-
-    // Simulate API delay
-    await new Promise((resolve) => setTimeout(resolve, 1000));
-
-    // Check if credentials match
-    const isValid =
-      email === validCredentials[role].email &&
-      password === validCredentials[role].password;
-
-    if (!isValid) {
-      // For demo purposes, accept any email/password combination
-      // Remove this in production and only return isValid
-      return true; // CHANGE THIS TO: return isValid; in production
-    }
-
-    return isValid;
-  };
-
   const handleSubmit = async (e) => {
     e.preventDefault();
 
-    // Validation
     if (!formData.email || !formData.password) {
       toast.error("Please fill in all fields");
       return;
     }
 
-    // Email validation
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     if (!emailRegex.test(formData.email)) {
       toast.error("Please enter a valid email address");
       return;
     }
 
-    // Password length validation
     if (formData.password.length < 6) {
       toast.error("Password must be at least 6 characters");
       return;
@@ -123,75 +81,27 @@ const LoginPage = ({ onLogin, onBack, onGoToSignUp }) => {
     setIsLoading(true);
 
     try {
-      // Validate credentials
-      const isValidUser = await validateCredentials(
-        formData.email,
-        formData.password,
-        formData.role,
-      );
+      // Call backend login API
+      const response = await authService.login({
+        email: formData.email,
+        password: formData.password,
+        role: formData.role,
+      });
 
-      if (!isValidUser) {
-        toast.error("Invalid email or password");
+      if (!response.user) {
+        toast.error("Login failed");
         setIsLoading(false);
         return;
       }
 
-      // Check last login time
-      const lastLogin = localStorage.getItem(`lastLogin_${formData.email}`);
-      const currentTime = new Date().getTime();
-
-      let daysSinceLastLogin = 999;
-      if (lastLogin) {
-        daysSinceLastLogin =
-          (currentTime - parseInt(lastLogin)) / (1000 * 60 * 60 * 24);
-      }
-
-      // Create user object
-      const user = {
-        id: Date.now(),
-        name: formData.role === "faculty" ? "Dr. John Smith" : "John Doe",
-        email: formData.email,
-        role: formData.role,
-        ...(formData.role === "student" ? { studentId: "STU2024001" } : {}),
-        ...(formData.role === "faculty" ? { department: "ECE" } : {}),
-      };
-
-      // Check if remember me allows skipping OTP
-      const rememberedUser = localStorage.getItem("rememberedUser");
-      const isRememberedUser =
-        rememberedUser && JSON.parse(rememberedUser).email === formData.email;
-      const skipOTP =
-        rememberMe && isRememberedUser && daysSinceLastLogin <= 30;
-
-      // Check if OTP is required (login after 30 days or first login)
-      if (!skipOTP && (daysSinceLastLogin > 30 || !lastLogin)) {
-        // OTP required
-        setPendingUser(user);
-        setRequiresOTP(true);
-
-        // Send OTP
-        toast.promise(
-          new Promise((resolve) => {
-            setTimeout(() => {
-              resolve("OTP sent successfully!");
-              setShowOTPModal(true);
-              setIsLoading(false);
-            }, 1500);
-          }),
-          {
-            loading: "Verifying credentials...",
-            success: "OTP sent to your email! 📧",
-            error: "Failed to send OTP",
-          },
-        );
-      } else {
-        // Direct login (no OTP required)
-        performLogin(user);
-        setIsLoading(false);
-      }
+      // Successful login
+      performLogin(response.user);
+      setIsLoading(false);
     } catch (error) {
       console.error("Login error:", error);
-      toast.error("An error occurred. Please try again.");
+      const errorMessage =
+        error.msg || "Invalid credentials. Please try again.";
+      toast.error(errorMessage);
       setIsLoading(false);
     }
   };
@@ -199,14 +109,9 @@ const LoginPage = ({ onLogin, onBack, onGoToSignUp }) => {
   const performLogin = (user) => {
     const currentTime = new Date().getTime();
 
-    // Clear the logged out flag
     sessionStorage.removeItem("loggedOut");
-
-    // Store user and update last login
-    localStorage.setItem("user", JSON.stringify(user));
     localStorage.setItem(`lastLogin_${user.email}`, currentTime.toString());
 
-    // Save credentials if "Remember Me" is checked (email and role only)
     if (rememberMe) {
       localStorage.setItem(
         "rememberedUser",
@@ -216,14 +121,12 @@ const LoginPage = ({ onLogin, onBack, onGoToSignUp }) => {
         }),
       );
     } else {
-      // Clear remembered user if not checked
       localStorage.removeItem("rememberedUser");
     }
 
     toast.success(`Welcome back, ${user.name}! 🎉`);
     onLogin(user);
 
-    // Navigate based on role
     setTimeout(() => {
       if (user.role === "faculty") {
         navigate("/faculty/dashboard");
@@ -231,11 +134,6 @@ const LoginPage = ({ onLogin, onBack, onGoToSignUp }) => {
         navigate("/dashboard");
       }
     }, 100);
-  };
-
-  const handleOTPVerify = () => {
-    setShowOTPModal(false);
-    performLogin(pendingUser);
   };
 
   return (
@@ -268,19 +166,12 @@ const LoginPage = ({ onLogin, onBack, onGoToSignUp }) => {
             <div className="bg-primary/5 border border-primary/20 rounded-xl p-4 mt-6">
               <h3 className="font-bold text-foreground mb-2 flex items-center gap-2">
                 <Shield className="w-5 h-5 text-primary" />
-                Demo Credentials
+                Secure Authentication
               </h3>
-              <div className="space-y-2 text-sm text-muted-foreground">
-                <p>
-                  <strong>Student:</strong> student@test.com / student123
-                </p>
-                <p>
-                  <strong>Faculty:</strong> faculty@test.com / faculty123
-                </p>
-                <p className="text-xs mt-2">
-                  Or use any email/password for testing
-                </p>
-              </div>
+              <p className="text-sm text-muted-foreground">
+                Your credentials are validated against our secure MongoDB
+                database.
+              </p>
             </div>
           </div>
         </motion.div>
@@ -292,7 +183,6 @@ const LoginPage = ({ onLogin, onBack, onGoToSignUp }) => {
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.6 }}
         >
-          {/* Back Button */}
           <button
             onClick={onBack}
             className="flex items-center gap-2 text-muted-foreground hover:text-foreground transition-colors mb-6"
@@ -402,7 +292,7 @@ const LoginPage = ({ onLogin, onBack, onGoToSignUp }) => {
               </div>
             </div>
 
-            {/* Remember Me & Forgot Password */}
+            {/* Remember Me */}
             <div className="flex items-center justify-between">
               <label className="flex items-center gap-2 cursor-pointer">
                 <input
@@ -413,7 +303,7 @@ const LoginPage = ({ onLogin, onBack, onGoToSignUp }) => {
                   className="w-4 h-4 rounded border-border text-primary focus:ring-primary disabled:opacity-50"
                 />
                 <span className="text-sm text-muted-foreground">
-                  Remember me for 30 days
+                  Remember me
                 </span>
               </label>
               <button
@@ -468,18 +358,6 @@ const LoginPage = ({ onLogin, onBack, onGoToSignUp }) => {
           </p>
         </motion.div>
       </div>
-
-      {/* OTP Modal */}
-      <OTPVerificationModal
-        isOpen={showOTPModal}
-        onClose={() => {
-          setShowOTPModal(false);
-          setIsLoading(false);
-        }}
-        email={formData.email}
-        onVerify={handleOTPVerify}
-        isLogin={true}
-      />
     </div>
   );
 };
