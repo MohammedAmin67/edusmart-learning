@@ -10,15 +10,15 @@ import {
   Sun,
   Moon,
   ChevronDown,
-  Upload,
   Camera,
+  MessageSquare,
 } from "lucide-react";
 import { DarkModeContext } from "../../App";
 import { useUser } from "../context/UserContext";
 import { useNavigate } from "react-router-dom";
 import { toast } from "react-hot-toast";
 
-const Header = ({ onMenuToggle, setActiveTab, setSelectedCourseId }) => {
+const FacultyHeader = ({ onMenuToggle, setActiveTab }) => {
   const { darkMode, toggleDarkMode } = useContext(DarkModeContext);
   const { user, setUser } = useUser();
   const navigate = useNavigate();
@@ -27,26 +27,26 @@ const Header = ({ onMenuToggle, setActiveTab, setSelectedCourseId }) => {
   const [searchQuery, setSearchQuery] = useState("");
   const fileInputRef = useRef(null);
 
-  // Mock notifications
+  // Mock notifications for faculty
   const notifications = [
     {
       id: 1,
-      type: "achievement",
-      message: "You earned a new badge! 🏆",
+      type: "doubt",
+      message: "New doubt raised by John Doe in JavaScript",
       time: "5 min ago",
       unread: true,
     },
     {
       id: 2,
-      type: "course",
-      message: "New lesson available in React Development",
+      type: "student",
+      message: "Sarah completed React Development course",
       time: "1 hour ago",
       unread: true,
     },
     {
       id: 3,
       type: "system",
-      message: "Your quiz results are ready",
+      message: "Weekly analytics report is ready",
       time: "2 hours ago",
       unread: false,
     },
@@ -57,10 +57,9 @@ const Header = ({ onMenuToggle, setActiveTab, setSelectedCourseId }) => {
   const handleSearch = (e) => {
     e.preventDefault();
     if (searchQuery.trim()) {
-      // Mock search - in production, this would search through courses
       toast.success(`Searching for: ${searchQuery}`);
-      setActiveTab("courses");
-      navigate("/dashboard/courses");
+      setActiveTab("students");
+      navigate("/faculty/students");
     }
   };
 
@@ -144,7 +143,7 @@ const Header = ({ onMenuToggle, setActiveTab, setSelectedCourseId }) => {
                 type="text"
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                placeholder="Search courses..."
+                placeholder="Search students, courses..."
                 className="w-64 lg:w-80 pl-11 pr-4 py-2 bg-muted rounded-xl border border-border text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary transition-all"
               />
             </div>
@@ -267,16 +266,16 @@ const Header = ({ onMenuToggle, setActiveTab, setSelectedCourseId }) => {
               ) : (
                 <div className="w-8 h-8 bg-gradient-to-br from-primary to-accent rounded-lg flex items-center justify-center">
                   <span className="text-sm font-bold text-white">
-                    {user?.name?.charAt(0) || "U"}
+                    {user?.name?.charAt(0) || "F"}
                   </span>
                 </div>
               )}
               <div className="hidden sm:block text-left">
                 <p className="text-sm font-bold text-foreground">
-                  {user?.name || "User"}
+                  {user?.name || "Faculty"}
                 </p>
                 <p className="text-xs text-muted-foreground">
-                  {user?.role === "faculty" ? "Faculty" : "Student"}
+                  {user?.department || "Department"}
                 </p>
               </div>
               <ChevronDown className="w-4 h-4 text-muted-foreground" />
@@ -330,19 +329,8 @@ const Header = ({ onMenuToggle, setActiveTab, setSelectedCourseId }) => {
                       <button
                         onClick={() => {
                           setShowProfileMenu(false);
-                          setActiveTab("profile");
-                          navigate("/dashboard/profile");
-                        }}
-                        className="w-full flex items-center gap-3 px-4 py-2 hover:bg-muted transition-colors text-left"
-                      >
-                        <User className="w-4 h-4 text-muted-foreground" />
-                        <span className="text-sm text-foreground">Profile</span>
-                      </button>
-                      <button
-                        onClick={() => {
-                          setShowProfileMenu(false);
                           setActiveTab("settings");
-                          navigate("/dashboard/settings");
+                          navigate("/faculty/settings");
                         }}
                         className="w-full flex items-center gap-3 px-4 py-2 hover:bg-muted transition-colors text-left"
                       >
@@ -373,4 +361,4 @@ const Header = ({ onMenuToggle, setActiveTab, setSelectedCourseId }) => {
   );
 };
 
-export default Header;
+export default FacultyHeader;

@@ -28,6 +28,17 @@ import LoginPage from "./components/Auth/LoginPage";
 import toast, { Toaster } from "react-hot-toast";
 import { UserProvider, useUser } from "./components/context/UserContext";
 
+// Faculty Components
+import FacultyDashboard from "./components/faculty/FacultyDashboard";
+import FacultyHeader from "./components/faculty/FacultyHeader";
+import FacultySidebar from "./components/faculty/FacultySidebar";
+import StudentMonitoring from "./components/faculty/StudentMonitoring";
+import StudentDetailsView from "./components/faculty/StudentDetailsView";
+import CourseManagement from "./components/faculty/CourseManagement";
+import DoubtManagement from "./components/faculty/DoubtManagement";
+import FacultyAnalytics from "./components/faculty/FacultyAnalytics";
+import FacultySettings from "./components/faculty/FacultySettings";
+
 export const DarkModeContext = createContext({
   darkMode: false,
   setDarkMode: () => {},
@@ -44,6 +55,7 @@ function ScrollToTop() {
   return null;
 }
 
+// Student Dashboard Layout
 function DashboardLayout({
   activeTab,
   setActiveTab,
@@ -108,7 +120,7 @@ function DashboardLayout({
                   selectedCourseId ? (
                     <div className="w-full max-w-7xl mx-auto animate-fadeInUp">
                       <LessonPlayer selectedCourseId={selectedCourseId} />
-                      <div className="mt-4 lg:mt-4">
+                      <div className="mt-4">
                         <QuizSystem
                           selectedCourseId={selectedCourseId}
                           setActiveTab={setActiveTab}
@@ -118,7 +130,7 @@ function DashboardLayout({
                           }}
                         />
                       </div>
-                      <div className="mt-4 lg:mt-4 flex justify-center pb-8">
+                      <div className="mt-4 flex justify-center pb-8">
                         <button
                           className="btn-primary inline-flex items-center gap-2"
                           onClick={() => {
@@ -211,6 +223,61 @@ function DashboardLayout({
   );
 }
 
+// Faculty Dashboard Layout
+function FacultyLayout({
+  activeTab,
+  setActiveTab,
+  sidebarOpen,
+  setSidebarOpen,
+}) {
+  const navigate = useNavigate();
+
+  return (
+    <div className="min-h-screen bg-background transition-colors duration-300">
+      <ScrollToTop />
+      <div className="flex min-h-screen">
+        <FacultySidebar
+          activeTab={activeTab}
+          setActiveTab={(tab) => {
+            setActiveTab(tab);
+            navigate(`/faculty/${tab === "dashboard" ? "" : tab}`);
+          }}
+          isOpen={sidebarOpen}
+          onClose={() => setSidebarOpen(false)}
+        />
+        <div className="flex-1 flex flex-col min-h-screen">
+          <FacultyHeader
+            onMenuToggle={() => setSidebarOpen(!sidebarOpen)}
+            setActiveTab={(tab) => {
+              setActiveTab(tab);
+              navigate(`/faculty/${tab === "dashboard" ? "" : tab}`);
+            }}
+          />
+          <main className="flex-1 w-full">
+            <Routes>
+              <Route index element={<FacultyDashboard />} />
+              <Route path="dashboard" element={<FacultyDashboard />} />
+              <Route path="students" element={<StudentMonitoring />} />
+              <Route
+                path="students/:studentId"
+                element={<StudentDetailsView />}
+              />
+              <Route path="courses" element={<CourseManagement />} />
+              <Route path="doubts" element={<DoubtManagement />} />
+              <Route path="analytics" element={<FacultyAnalytics />} />
+              <Route path="settings" element={<FacultySettings />} />
+              <Route
+                path="*"
+                element={<Navigate to="/faculty/dashboard" replace />}
+              />
+            </Routes>
+          </main>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 function AppRoutes({
   activeTab,
   setActiveTab,
@@ -220,7 +287,7 @@ function AppRoutes({
   setSelectedCourseId,
 }) {
   const navigate = useNavigate();
-  const { user, setUser } = useUser();
+  const { user, setUser, loading } = useUser();
   const location = useLocation();
 
   // Sync activeTab with current route
@@ -240,19 +307,35 @@ function AppRoutes({
       setActiveTab("achievements");
     } else if (path.startsWith("/dashboard/settings")) {
       setActiveTab("settings");
+    } else if (path.startsWith("/faculty/")) {
+      const facultyTab =
+        path.split("/faculty/")[1]?.split("/")[0] || "dashboard";
+      setActiveTab(facultyTab);
     }
   }, [location.pathname, setActiveTab]);
 
   // Auth Handlers
   const handleLogin = (userObj) => {
     setUser(userObj);
-    navigate("/dashboard");
+    // Navigation happens inside LoginPage after OTP verification
   };
 
   const handleSignUp = (userObj) => {
     setUser(userObj);
-    navigate("/dashboard");
+    // Navigation happens inside SignUpPage after OTP verification
   };
+
+  // Show loading spinner while checking auth state
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-background flex items-center justify-center">
+        <div className="text-center">
+          <div className="w-16 h-16 border-4 border-primary border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
+          <p className="text-muted-foreground">Loading...</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <Routes>
@@ -260,36 +343,68 @@ function AppRoutes({
       <Route
         path="/signup"
         element={
-          <SignUpPage
-            isLoggedIn={!!user}
-            onBack={() => navigate(-1)}
-            onSignUp={handleSignUp}
-          />
+          user ? (
+            <Navigate
+              to={user.role === "faculty" ? "/faculty/dashboard" : "/dashboard"}
+              replace
+            />
+          ) : (
+            <SignUpPage onBack={() => navigate(-1)} onSignUp={handleSignUp} />
+          )
         }
       />
       <Route
         path="/login"
         element={
-          <LoginPage
-            isLoggedIn={!!user}
-            onBack={() => navigate(-1)}
-            onLogin={handleLogin}
-            onGoToSignUp={() => navigate("/signup")}
-          />
+          user ? (
+            <Navigate
+              to={user.role === "faculty" ? "/faculty/dashboard" : "/dashboard"}
+              replace
+            />
+          ) : (
+            <LoginPage
+              onBack={() => navigate(-1)}
+              onLogin={handleLogin}
+              onGoToSignUp={() => navigate("/signup")}
+            />
+          )
         }
       />
       <Route
         path="/dashboard/*"
         element={
-          !!user ? (
-            <DashboardLayout
-              activeTab={activeTab}
-              setActiveTab={setActiveTab}
-              sidebarOpen={sidebarOpen}
-              setSidebarOpen={setSidebarOpen}
-              selectedCourseId={selectedCourseId}
-              setSelectedCourseId={setSelectedCourseId}
-            />
+          user ? (
+            user.role === "student" ? (
+              <DashboardLayout
+                activeTab={activeTab}
+                setActiveTab={setActiveTab}
+                sidebarOpen={sidebarOpen}
+                setSidebarOpen={setSidebarOpen}
+                selectedCourseId={selectedCourseId}
+                setSelectedCourseId={setSelectedCourseId}
+              />
+            ) : (
+              <Navigate to="/faculty/dashboard" replace />
+            )
+          ) : (
+            <Navigate to="/login" replace />
+          )
+        }
+      />
+      <Route
+        path="/faculty/*"
+        element={
+          user ? (
+            user.role === "faculty" ? (
+              <FacultyLayout
+                activeTab={activeTab}
+                setActiveTab={setActiveTab}
+                sidebarOpen={sidebarOpen}
+                setSidebarOpen={setSidebarOpen}
+              />
+            ) : (
+              <Navigate to="/dashboard" replace />
+            )
           ) : (
             <Navigate to="/login" replace />
           )

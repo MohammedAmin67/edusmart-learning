@@ -1,35 +1,37 @@
-import express from 'express';
-import cors from 'cors';
-import cookieParser from 'cookie-parser';
-import crypto from 'crypto';
-import path from 'path';
-import { fileURLToPath } from 'url';
-import { connectDB } from './lib/db.js';
-import authRoutes from './routes/auth.js';
-import userRoutes from './routes/users.js';
+import express from "express";
+import cors from "cors";
+import cookieParser from "cookie-parser";
+import crypto from "crypto";
+import path from "path";
+import { fileURLToPath } from "url";
+import { connectDB } from "./lib/db.js";
+import authRoutes from "./routes/auth.js";
+import userRoutes from "./routes/users.js";
 import "dotenv/config";
 
 if (!process.env.JWT_SECRET) {
-  process.env.JWT_SECRET = crypto.randomBytes(64).toString('hex');
-  console.log('Generated random JWT_SECRET for this session.');
+  process.env.JWT_SECRET = crypto.randomBytes(64).toString("hex");
+  console.log("Generated random JWT_SECRET for this session.");
 } else {
-  console.log('Using JWT_SECRET from environment.');
+  console.log("Using JWT_SECRET from environment.");
 }
 
 const app = express();
 
-app.use(cors({
-  origin: process.env.CLIENT_URL || 'http://localhost:5173',
-  credentials: true,
-}));
+app.use(
+  cors({
+    origin: process.env.CLIENT_URL || "http://localhost:5173",
+    credentials: true,
+  }),
+);
 
 app.use(express.json());
 app.use(cookieParser());
 
 const PORT = process.env.PORT || 5002;
 
-app.use('/api/auth', authRoutes);
-app.use('/api/users', userRoutes);
+app.use("/api/auth", authRoutes);
+app.use("/api/users", userRoutes);
 
 // ===== REMOVED: Serving frontend static files for Render deployment =====
 // const __filename = fileURLToPath(import.meta.url);
@@ -57,7 +59,7 @@ const startServer = async () => {
       console.log(`Server is running on port: ${PORT}`);
     });
   } catch (error) {
-    console.error('Error connecting to the database:', error);
+    console.error("Error connecting to the database:", error);
     process.exit(1);
   }
 };

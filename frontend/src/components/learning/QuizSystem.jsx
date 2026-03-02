@@ -26,7 +26,7 @@ const mockQuizzes = {
     id: 1,
     title: "JavaScript Fundamentals Quiz",
     description: "Test your knowledge of JavaScript basics",
-    timeLimit: 600, // 10 minutes in seconds
+    timeLimit: 300, // 5 minutes in seconds
     passingScore: 70,
     xpReward: 100,
     questions: [

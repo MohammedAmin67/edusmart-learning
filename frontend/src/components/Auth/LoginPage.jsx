@@ -1,201 +1,485 @@
-import React, { useState, useContext } from "react";
-import {
-  ChevronLeft,
-  GraduationCap,
-  Moon,
-  Sun,
-  ArrowRight,
-} from "lucide-react";
+import React, { useState, useEffect } from "react";
 import { motion } from "framer-motion";
-import Button from "../shared/Button";
-import { Navigate, Link } from "react-router-dom";
-import { DarkModeContext } from "../../App";
-import toast from "react-hot-toast";
-import API from "../../api/axios.js";
+import {
+  Mail,
+  Lock,
+  Eye,
+  EyeOff,
+  ArrowRight,
+  Shield,
+  GraduationCap,
+  ChevronLeft,
+  LogIn,
+} from "lucide-react";
+import { toast } from "react-hot-toast";
+import { useNavigate } from "react-router-dom";
+import OTPVerificationModal from "./OTPVerificationModal";
 
-const LoginPage = ({ isLoggedIn, onBack, onLogin, onGoToSignUp }) => {
-  const [form, setForm] = useState({ email: "", password: "" });
-  const [submitting, setSubmitting] = useState(false);
-  const { darkMode, toggleDarkMode } = useContext(DarkModeContext);
+const LoginPage = ({ onLogin, onBack, onGoToSignUp }) => {
+  const navigate = useNavigate();
+  const [formData, setFormData] = useState({
+    email: "",
+    password: "",
+    role: "student", // Default to student
+  });
+  const [showPassword, setShowPassword] = useState(false);
+  const [showOTPModal, setShowOTPModal] = useState(false);
+  const [pendingUser, setPendingUser] = useState(null);
+  const [requiresOTP, setRequiresOTP] = useState(false);
+  const [rememberMe, setRememberMe] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
 
-  if (isLoggedIn) {
-    return <Navigate to="/dashboard" />;
-  }
+  // Load remembered user on component mount (email and role only, NOT auto-login)
+  useEffect(() => {
+    // Clear the logged out flag when coming to login page
+    sessionStorage.removeItem("loggedOut");
+
+    const rememberedUser = localStorage.getItem("rememberedUser");
+    if (rememberedUser) {
+      try {
+        const { email, role } = JSON.parse(rememberedUser);
+        setFormData((prev) => ({
+          ...prev,
+          email,
+          role,
+        }));
+        setRememberMe(true);
+      } catch (error) {
+        console.error("Error loading remembered user:", error);
+        localStorage.removeItem("rememberedUser");
+      }
+    }
+  }, []);
 
   const handleChange = (e) => {
-    setForm({ ...form, [e.target.name]: e.target.value });
+    setFormData({
+      ...formData,
+      [e.target.name]: e.target.value,
+    });
+  };
+
+  const handleRoleSelect = (role) => {
+    setFormData({
+      ...formData,
+      role,
+    });
+  };
+
+  const validateCredentials = async (email, password, role) => {
+    // Mock credential validation
+    // In production, this would call your backend API
+
+    // Demo credentials for testing
+    const validCredentials = {
+      student: {
+        email: "student@test.com",
+        password: "student123",
+      },
+      faculty: {
+        email: "faculty@test.com",
+        password: "faculty123",
+      },
+    };
+
+    // Simulate API delay
+    await new Promise((resolve) => setTimeout(resolve, 1000));
+
+    // Check if credentials match
+    const isValid =
+      email === validCredentials[role].email &&
+      password === validCredentials[role].password;
+
+    if (!isValid) {
+      // For demo purposes, accept any email/password combination
+      // Remove this in production and only return isValid
+      return true; // CHANGE THIS TO: return isValid; in production
+    }
+
+    return isValid;
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    setSubmitting(true);
+
+    // Validation
+    if (!formData.email || !formData.password) {
+      toast.error("Please fill in all fields");
+      return;
+    }
+
+    // Email validation
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(formData.email)) {
+      toast.error("Please enter a valid email address");
+      return;
+    }
+
+    // Password length validation
+    if (formData.password.length < 6) {
+      toast.error("Password must be at least 6 characters");
+      return;
+    }
+
+    setIsLoading(true);
+
     try {
-      const response = await API.post("/auth/login", form);
-      localStorage.setItem("authToken", response.data.token);
-      localStorage.setItem("user", JSON.stringify(response.data.user));
-      localStorage.setItem("isLoggedIn", "true");
-      setSubmitting(false);
-      toast.success(response.data.msg || "Login successful!");
-      if (onLogin) onLogin(response.data.user);
-    } catch (error) {
-      setSubmitting(false);
-      toast.error(
-        error.response?.data?.msg || "Login failed. Please try again.",
+      // Validate credentials
+      const isValidUser = await validateCredentials(
+        formData.email,
+        formData.password,
+        formData.role,
       );
+
+      if (!isValidUser) {
+        toast.error("Invalid email or password");
+        setIsLoading(false);
+        return;
+      }
+
+      // Check last login time
+      const lastLogin = localStorage.getItem(`lastLogin_${formData.email}`);
+      const currentTime = new Date().getTime();
+
+      let daysSinceLastLogin = 999;
+      if (lastLogin) {
+        daysSinceLastLogin =
+          (currentTime - parseInt(lastLogin)) / (1000 * 60 * 60 * 24);
+      }
+
+      // Create user object
+      const user = {
+        id: Date.now(),
+        name: formData.role === "faculty" ? "Dr. John Smith" : "John Doe",
+        email: formData.email,
+        role: formData.role,
+        ...(formData.role === "student" ? { studentId: "STU2024001" } : {}),
+        ...(formData.role === "faculty" ? { department: "ECE" } : {}),
+      };
+
+      // Check if remember me allows skipping OTP
+      const rememberedUser = localStorage.getItem("rememberedUser");
+      const isRememberedUser =
+        rememberedUser && JSON.parse(rememberedUser).email === formData.email;
+      const skipOTP =
+        rememberMe && isRememberedUser && daysSinceLastLogin <= 30;
+
+      // Check if OTP is required (login after 30 days or first login)
+      if (!skipOTP && (daysSinceLastLogin > 30 || !lastLogin)) {
+        // OTP required
+        setPendingUser(user);
+        setRequiresOTP(true);
+
+        // Send OTP
+        toast.promise(
+          new Promise((resolve) => {
+            setTimeout(() => {
+              resolve("OTP sent successfully!");
+              setShowOTPModal(true);
+              setIsLoading(false);
+            }, 1500);
+          }),
+          {
+            loading: "Verifying credentials...",
+            success: "OTP sent to your email! 📧",
+            error: "Failed to send OTP",
+          },
+        );
+      } else {
+        // Direct login (no OTP required)
+        performLogin(user);
+        setIsLoading(false);
+      }
+    } catch (error) {
+      console.error("Login error:", error);
+      toast.error("An error occurred. Please try again.");
+      setIsLoading(false);
     }
   };
 
+  const performLogin = (user) => {
+    const currentTime = new Date().getTime();
+
+    // Clear the logged out flag
+    sessionStorage.removeItem("loggedOut");
+
+    // Store user and update last login
+    localStorage.setItem("user", JSON.stringify(user));
+    localStorage.setItem(`lastLogin_${user.email}`, currentTime.toString());
+
+    // Save credentials if "Remember Me" is checked (email and role only)
+    if (rememberMe) {
+      localStorage.setItem(
+        "rememberedUser",
+        JSON.stringify({
+          email: user.email,
+          role: user.role,
+        }),
+      );
+    } else {
+      // Clear remembered user if not checked
+      localStorage.removeItem("rememberedUser");
+    }
+
+    toast.success(`Welcome back, ${user.name}! 🎉`);
+    onLogin(user);
+
+    // Navigate based on role
+    setTimeout(() => {
+      if (user.role === "faculty") {
+        navigate("/faculty/dashboard");
+      } else {
+        navigate("/dashboard");
+      }
+    }, 100);
+  };
+
+  const handleOTPVerify = () => {
+    setShowOTPModal(false);
+    performLogin(pendingUser);
+  };
+
   return (
-    <div className="bg-background min-h-screen flex flex-col relative overflow-hidden transition-colors duration-700">
-      {/* Header */}
-      <header className="bg-card/95 shadow-sm sticky top-0 z-50 backdrop-blur-xl border-b border-border">
-        <div className="w-full max-w-7xl mx-auto px-4 sm:px-6 py-3 sm:py-4">
-          <div className="flex justify-between items-center gap-3">
-            <Link
-              to="/"
-              className="flex items-center space-x-2 sm:space-x-4 flex-shrink-0"
-            >
-              <div className="w-10 h-10 sm:w-14 sm:h-14 bg-gradient-hero rounded-xl sm:rounded-2xl flex items-center justify-center shadow-md">
-                <GraduationCap className="text-white" size={18} />
+    <div className="min-h-screen bg-background flex items-center justify-center p-4">
+      <div className="w-full max-w-5xl grid lg:grid-cols-2 gap-8 items-center">
+        {/* Left Side - Branding */}
+        <motion.div
+          className="hidden lg:block"
+          initial={{ opacity: 0, x: -50 }}
+          animate={{ opacity: 1, x: 0 }}
+          transition={{ duration: 0.6 }}
+        >
+          <div className="space-y-6">
+            <div className="flex items-center gap-3">
+              <div className="w-12 h-12 bg-gradient-to-br from-primary to-accent rounded-xl flex items-center justify-center">
+                <GraduationCap className="w-7 h-7 text-white" />
               </div>
-              <div className="block">
-                <span className="text-xl sm:text-3xl font-black gradient-text">
-                  EduSmart
-                </span>
-                <p className="hidden md:block text-sm text-muted-foreground font-medium">
-                  Transform Your Future
+              <h1 className="text-3xl font-black text-foreground">EduSmart</h1>
+            </div>
+
+            <h2 className="text-4xl font-black text-foreground leading-tight">
+              Welcome Back to Smart Learning
+            </h2>
+
+            <p className="text-lg text-muted-foreground">
+              Sign in to continue your learning journey with AI-powered
+              education.
+            </p>
+
+            <div className="bg-primary/5 border border-primary/20 rounded-xl p-4 mt-6">
+              <h3 className="font-bold text-foreground mb-2 flex items-center gap-2">
+                <Shield className="w-5 h-5 text-primary" />
+                Demo Credentials
+              </h3>
+              <div className="space-y-2 text-sm text-muted-foreground">
+                <p>
+                  <strong>Student:</strong> student@test.com / student123
+                </p>
+                <p>
+                  <strong>Faculty:</strong> faculty@test.com / faculty123
+                </p>
+                <p className="text-xs mt-2">
+                  Or use any email/password for testing
                 </p>
               </div>
-            </Link>
-
-            <div className="flex items-center gap-2 sm:gap-4">
-              <button
-                onClick={toggleDarkMode}
-                className="p-2 sm:p-3 rounded-lg sm:rounded-xl bg-secondary text-secondary-foreground hover:bg-muted transition-all duration-300 hover:scale-105"
-                aria-label="Toggle dark mode"
-              >
-                {darkMode ? (
-                  <Sun size={18} className="sm:w-5 sm:h-5" />
-                ) : (
-                  <Moon size={18} className="sm:w-5 sm:h-5" />
-                )}
-              </button>
-            </div>
-          </div>
-        </div>
-      </header>
-
-      {/* Main Content */}
-      <div
-        className="flex-1 flex items-center justify-center px-4 sm:px-6 py-8 sm:py-12"
-        style={{ background: "var(--section-hero)" }}
-      >
-        {/* Background Decorations */}
-        <div className="absolute inset-0 pointer-events-none opacity-50">
-          <div className="absolute top-1/4 left-1/4 w-64 h-64 bg-primary/10 rounded-full blur-3xl animate-pulse-subtle" />
-          <div
-            className="absolute bottom-1/4 right-1/4 w-96 h-96 bg-accent/10 rounded-full blur-3xl animate-pulse-subtle"
-            style={{ animationDelay: "1s" }}
-          />
-        </div>
-
-        <motion.div
-          initial={{ opacity: 0, y: 20, scale: 0.95 }}
-          animate={{ opacity: 1, y: 0, scale: 1 }}
-          transition={{ duration: 0.6 }}
-          className="z-10 w-full max-w-md"
-        >
-          <div className="bg-card/95 backdrop-blur-xl rounded-2xl shadow-xl border border-border p-6 sm:p-8 md:p-10">
-            {/* Back Button */}
-            <div className="flex justify-end mb-4">
-              <button
-                onClick={onBack}
-                className="p-2 rounded-xl bg-secondary text-secondary-foreground hover:bg-muted transition-all duration-300 hover:scale-105"
-                aria-label="Back to home"
-              >
-                <ChevronLeft size={20} />
-              </button>
-            </div>
-
-            {/* Title */}
-            <div className="text-center mb-8">
-              <h1 className="text-3xl sm:text-4xl font-black text-foreground mb-3">
-                Welcome Back
-              </h1>
-              <p className="text-muted-foreground text-base sm:text-lg">
-                Login to continue your learning journey
-              </p>
-            </div>
-
-            {/* Form */}
-            <form onSubmit={handleSubmit} className="space-y-5">
-              <div>
-                <label className="block text-foreground font-semibold mb-2 text-sm sm:text-base">
-                  Email Address
-                </label>
-                <input
-                  type="email"
-                  name="email"
-                  className="w-full px-4 py-3 rounded-xl bg-background border border-border focus:ring-2 focus:ring-primary focus:border-primary transition outline-none text-foreground"
-                  placeholder="you@example.com"
-                  required
-                  value={form.email}
-                  onChange={handleChange}
-                  autoComplete="email"
-                />
-              </div>
-
-              <div>
-                <label className="block text-foreground font-semibold mb-2 text-sm sm:text-base">
-                  Password
-                </label>
-                <input
-                  type="password"
-                  name="password"
-                  className="w-full px-4 py-3 rounded-xl bg-background border border-border focus:ring-2 focus:ring-primary focus:border-primary transition outline-none text-foreground"
-                  placeholder="••••••••"
-                  required
-                  value={form.password}
-                  onChange={handleChange}
-                  autoComplete="current-password"
-                />
-              </div>
-
-              <button
-                type="submit"
-                disabled={submitting}
-                className="w-full px-6 py-4 bg-accent text-accent-foreground rounded-xl font-bold text-base sm:text-lg shadow-accent-glow hover:shadow-lg transition-all duration-300 hover:scale-105 inline-flex items-center justify-center gap-3 disabled:opacity-50 disabled:cursor-not-allowed"
-              >
-                {submitting ? "Logging in..." : "Login"}
-                {!submitting && <ArrowRight size={20} />}
-              </button>
-            </form>
-
-            {/* Sign Up Link */}
-            <div className="mt-6 text-center">
-              <p className="text-muted-foreground text-sm sm:text-base">
-                Don't have an account?{" "}
-                <button
-                  type="button"
-                  onClick={onGoToSignUp}
-                  className="text-primary font-semibold hover:underline"
-                >
-                  Create Account
-                </button>
-              </p>
             </div>
           </div>
         </motion.div>
+
+        {/* Right Side - Login Form */}
+        <motion.div
+          className="bg-card rounded-2xl p-8 border border-border shadow-xl"
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.6 }}
+        >
+          {/* Back Button */}
+          <button
+            onClick={onBack}
+            className="flex items-center gap-2 text-muted-foreground hover:text-foreground transition-colors mb-6"
+            disabled={isLoading}
+          >
+            <ChevronLeft className="w-5 h-5" />
+            <span className="text-sm font-semibold">Back</span>
+          </button>
+
+          <h2 className="text-2xl font-black text-foreground mb-6">
+            Login to Your Account
+          </h2>
+
+          {/* Role Selection */}
+          <div className="grid grid-cols-2 gap-3 mb-6">
+            <button
+              type="button"
+              onClick={() => handleRoleSelect("student")}
+              disabled={isLoading}
+              className={`p-4 rounded-xl border-2 transition-all ${
+                formData.role === "student"
+                  ? "bg-primary/10 border-primary"
+                  : "bg-muted/50 border-transparent hover:border-primary/30"
+              } ${isLoading ? "opacity-50 cursor-not-allowed" : ""}`}
+            >
+              <GraduationCap
+                className={`w-8 h-8 mx-auto mb-2 ${
+                  formData.role === "student"
+                    ? "text-primary"
+                    : "text-muted-foreground"
+                }`}
+              />
+              <p className="font-bold text-sm text-foreground">Student</p>
+            </button>
+
+            <button
+              type="button"
+              onClick={() => handleRoleSelect("faculty")}
+              disabled={isLoading}
+              className={`p-4 rounded-xl border-2 transition-all ${
+                formData.role === "faculty"
+                  ? "bg-accent/10 border-accent"
+                  : "bg-muted/50 border-transparent hover:border-accent/30"
+              } ${isLoading ? "opacity-50 cursor-not-allowed" : ""}`}
+            >
+              <Shield
+                className={`w-8 h-8 mx-auto mb-2 ${
+                  formData.role === "faculty"
+                    ? "text-accent"
+                    : "text-muted-foreground"
+                }`}
+              />
+              <p className="font-bold text-sm text-foreground">Faculty</p>
+            </button>
+          </div>
+
+          <form onSubmit={handleSubmit} className="space-y-4">
+            {/* Email */}
+            <div>
+              <label className="block text-sm font-semibold text-foreground mb-2">
+                Email Address
+              </label>
+              <div className="relative">
+                <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground" />
+                <input
+                  type="email"
+                  name="email"
+                  value={formData.email}
+                  onChange={handleChange}
+                  placeholder="your.email@example.com"
+                  disabled={isLoading}
+                  className="w-full pl-11 pr-4 py-3 bg-muted rounded-xl border border-border text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary disabled:opacity-50 disabled:cursor-not-allowed"
+                  required
+                />
+              </div>
+            </div>
+
+            {/* Password */}
+            <div>
+              <label className="block text-sm font-semibold text-foreground mb-2">
+                Password
+              </label>
+              <div className="relative">
+                <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground" />
+                <input
+                  type={showPassword ? "text" : "password"}
+                  name="password"
+                  value={formData.password}
+                  onChange={handleChange}
+                  placeholder="Enter your password"
+                  disabled={isLoading}
+                  className="w-full pl-11 pr-11 py-3 bg-muted rounded-xl border border-border text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary disabled:opacity-50 disabled:cursor-not-allowed"
+                  required
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowPassword(!showPassword)}
+                  disabled={isLoading}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground disabled:opacity-50"
+                >
+                  {showPassword ? (
+                    <EyeOff className="w-5 h-5" />
+                  ) : (
+                    <Eye className="w-5 h-5" />
+                  )}
+                </button>
+              </div>
+            </div>
+
+            {/* Remember Me & Forgot Password */}
+            <div className="flex items-center justify-between">
+              <label className="flex items-center gap-2 cursor-pointer">
+                <input
+                  type="checkbox"
+                  checked={rememberMe}
+                  onChange={(e) => setRememberMe(e.target.checked)}
+                  disabled={isLoading}
+                  className="w-4 h-4 rounded border-border text-primary focus:ring-primary disabled:opacity-50"
+                />
+                <span className="text-sm text-muted-foreground">
+                  Remember me for 30 days
+                </span>
+              </label>
+              <button
+                type="button"
+                disabled={isLoading}
+                className="text-sm text-primary font-semibold hover:underline disabled:opacity-50"
+              >
+                Forgot Password?
+              </button>
+            </div>
+
+            {/* Submit Button */}
+            <button
+              type="submit"
+              disabled={isLoading}
+              className="w-full px-6 py-3 bg-gradient-to-r from-primary to-accent text-white rounded-xl font-bold hover:opacity-90 transition-all shadow-lg flex items-center justify-center gap-2 mt-6 disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              {isLoading ? (
+                <>
+                  <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                  Logging in...
+                </>
+              ) : (
+                <>
+                  <LogIn className="w-5 h-5" />
+                  Login as {formData.role === "faculty" ? "Faculty" : "Student"}
+                </>
+              )}
+            </button>
+          </form>
+
+          {/* Divider */}
+          <div className="relative my-6">
+            <div className="absolute inset-0 flex items-center">
+              <div className="w-full border-t border-border"></div>
+            </div>
+            <div className="relative flex justify-center text-sm">
+              <span className="px-4 bg-card text-muted-foreground">or</span>
+            </div>
+          </div>
+
+          {/* Sign Up Link */}
+          <p className="text-center text-sm text-muted-foreground">
+            Don't have an account?{" "}
+            <button
+              onClick={onGoToSignUp}
+              disabled={isLoading}
+              className="text-primary font-bold hover:underline disabled:opacity-50"
+            >
+              Sign up here
+            </button>
+          </p>
+        </motion.div>
       </div>
 
-      {/* Footer */}
-      <footer className="bg-card/98 border-t border-border py-6">
-        <div className="w-full max-w-7xl mx-auto px-4 sm:px-6 text-center">
-          <p className="text-muted-foreground text-sm">
-            &copy; {new Date().getFullYear()} EduSmart. All rights reserved.
-          </p>
-        </div>
-      </footer>
+      {/* OTP Modal */}
+      <OTPVerificationModal
+        isOpen={showOTPModal}
+        onClose={() => {
+          setShowOTPModal(false);
+          setIsLoading(false);
+        }}
+        email={formData.email}
+        onVerify={handleOTPVerify}
+        isLogin={true}
+      />
     </div>
   );
 };

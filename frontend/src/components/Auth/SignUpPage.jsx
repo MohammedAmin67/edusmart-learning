@@ -1,245 +1,428 @@
-import React, { useState, useContext } from "react";
-import {
-  ChevronLeft,
-  GraduationCap,
-  Moon,
-  Sun,
-  ArrowRight,
-} from "lucide-react";
+import React, { useState } from "react";
 import { motion } from "framer-motion";
-import Button from "../shared/Button";
-import toast from "react-hot-toast";
-import { Navigate, useNavigate, Link } from "react-router-dom";
-import { DarkModeContext } from "../../App";
-import API from "../../api/axios.js";
+import {
+  Mail,
+  Lock,
+  User,
+  Eye,
+  EyeOff,
+  ArrowRight,
+  Shield,
+  GraduationCap,
+  BookOpen,
+  ChevronLeft,
+} from "lucide-react";
+import { toast } from "react-hot-toast";
+import { useNavigate } from "react-router-dom";
+import OTPVerificationModal from "./OTPVerificationModal";
 
-const SignUpPage = ({ isLoggedIn, onBack, onSignUp }) => {
-  const [form, setForm] = useState({ name: "", email: "", password: "" });
-  const [submitting, setSubmitting] = useState(false);
+const SignUpPage = ({ onSignUp, onBack }) => {
   const navigate = useNavigate();
-  const { darkMode, toggleDarkMode } = useContext(DarkModeContext);
-
-  if (isLoggedIn) {
-    return <Navigate to="/dashboard" />;
-  }
+  const [formData, setFormData] = useState({
+    name: "",
+    email: "",
+    password: "",
+    confirmPassword: "",
+    role: "student", // student or faculty
+    department: "", // Only for faculty
+    studentId: "", // Only for students
+  });
+  const [showPassword, setShowPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+  const [showOTPModal, setShowOTPModal] = useState(false);
+  const [pendingUser, setPendingUser] = useState(null);
 
   const handleChange = (e) => {
-    setForm({ ...form, [e.target.name]: e.target.value });
+    setFormData({
+      ...formData,
+      [e.target.name]: e.target.value,
+    });
+  };
+
+  const handleRoleSelect = (role) => {
+    setFormData({
+      ...formData,
+      role,
+    });
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
 
     // Validation
-    if (!form.name || form.name.trim().length < 2) {
-      toast.error("Please enter your full name");
-      return;
-    }
-    if (!form.email) {
-      toast.error("Please enter your email address.");
-      return;
-    }
-    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(form.email)) {
-      toast.error("Please enter a valid email address.");
-      return;
-    }
-    if (!form.password) {
-      toast.error("Please enter your password.");
-      return;
-    }
-    if (form.password.length < 6) {
-      toast.error("Password must be at least 6 characters.");
+    if (!formData.name || !formData.email || !formData.password) {
+      toast.error("Please fill in all required fields");
       return;
     }
 
-    setSubmitting(true);
-    try {
-      const response = await API.post("/auth/signup", form);
-      localStorage.setItem("authToken", response.data.token);
-      localStorage.setItem("user", JSON.stringify(response.data.user));
-      localStorage.setItem("isLoggedIn", "true");
-      setSubmitting(false);
-      toast.success(response.data.msg || "Sign up successful!");
-      if (onSignUp) onSignUp(response.data.user);
-    } catch (error) {
-      setSubmitting(false);
-      toast.error(
-        error.response?.data?.msg || "Sign up failed. Please try again.",
-      );
+    if (formData.password !== formData.confirmPassword) {
+      toast.error("Passwords do not match");
+      return;
+    }
+
+    if (formData.password.length < 6) {
+      toast.error("Password must be at least 6 characters");
+      return;
+    }
+
+    if (formData.role === "student" && !formData.studentId) {
+      toast.error("Please enter your Student ID");
+      return;
+    }
+
+    if (formData.role === "faculty" && !formData.department) {
+      toast.error("Please select your department");
+      return;
+    }
+
+    // Email validation
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(formData.email)) {
+      toast.error("Please enter a valid email address");
+      return;
+    }
+
+    // Create pending user object
+    const user = {
+      id: Date.now(),
+      name: formData.name,
+      email: formData.email,
+      role: formData.role,
+      ...(formData.role === "student" ? { studentId: formData.studentId } : {}),
+      ...(formData.role === "faculty"
+        ? { department: formData.department }
+        : {}),
+      createdAt: new Date().toISOString(),
+    };
+
+    setPendingUser(user);
+
+    // Mock sending OTP (replace with actual API call)
+    // API: await fetch('/api/auth/send-otp', { email: formData.email })
+    toast.promise(
+      new Promise((resolve) => {
+        setTimeout(() => {
+          resolve("OTP sent successfully!");
+          setShowOTPModal(true);
+        }, 1500);
+      }),
+      {
+        loading: "Sending OTP to your email...",
+        success: "OTP sent! Check your email 📧",
+        error: "Failed to send OTP",
+      },
+    );
+  };
+
+  const handleOTPVerify = () => {
+    setShowOTPModal(false);
+
+    // Store verified user
+    localStorage.setItem("user", JSON.stringify(pendingUser));
+
+    toast.success(
+      `Account created successfully! Welcome ${pendingUser.role === "faculty" ? "Professor" : "Student"} ${pendingUser.name}! 🎉`,
+    );
+    onSignUp(pendingUser);
+
+    // Navigate based on role
+    if (pendingUser.role === "faculty") {
+      navigate("/faculty/dashboard");
+    } else {
+      navigate("/dashboard");
     }
   };
 
   return (
-    <div className="bg-background min-h-screen flex flex-col relative overflow-hidden transition-colors duration-700">
-      {/* Header */}
-      <header className="bg-card/95 shadow-sm sticky top-0 z-50 backdrop-blur-xl border-b border-border">
-        <div className="w-full max-w-7xl mx-auto px-4 sm:px-6 py-3 sm:py-4">
-          <div className="flex justify-between items-center gap-3">
-            <Link
-              to="/"
-              className="flex items-center space-x-2 sm:space-x-4 flex-shrink-0"
-            >
-              <div className="w-10 h-10 sm:w-14 sm:h-14 bg-gradient-hero rounded-xl sm:rounded-2xl flex items-center justify-center shadow-md">
-                <GraduationCap className="text-white" size={18} />
-              </div>
-              <div className="block">
-                <span className="text-xl sm:text-3xl font-black gradient-text">
-                  EduSmart
-                </span>
-                <p className="hidden md:block text-sm text-muted-foreground font-medium">
-                  Transform Your Future
-                </p>
-              </div>
-            </Link>
-
-            <div className="flex items-center gap-2 sm:gap-4">
-              <button
-                onClick={toggleDarkMode}
-                className="p-2 sm:p-3 rounded-lg sm:rounded-xl bg-secondary text-secondary-foreground hover:bg-muted transition-all duration-300 hover:scale-105"
-                aria-label="Toggle dark mode"
-              >
-                {darkMode ? (
-                  <Sun size={18} className="sm:w-5 sm:h-5" />
-                ) : (
-                  <Moon size={18} className="sm:w-5 sm:h-5" />
-                )}
-              </button>
-            </div>
-          </div>
-        </div>
-      </header>
-
-      {/* Main Content */}
-      <div
-        className="flex-1 flex items-center justify-center px-4 sm:px-6 py-8 sm:py-12"
-        style={{ background: "var(--section-hero)" }}
-      >
-        {/* Background Decorations */}
-        <div className="absolute inset-0 pointer-events-none opacity-50">
-          <div className="absolute top-1/4 left-1/4 w-64 h-64 bg-primary/10 rounded-full blur-3xl animate-pulse-subtle" />
-          <div
-            className="absolute bottom-1/4 right-1/4 w-96 h-96 bg-accent/10 rounded-full blur-3xl animate-pulse-subtle"
-            style={{ animationDelay: "1s" }}
-          />
-        </div>
-
+    <div className="min-h-screen bg-background flex items-center justify-center p-4">
+      <div className="w-full max-w-6xl grid lg:grid-cols-2 gap-8 items-center">
+        {/* Left Side - Branding */}
         <motion.div
-          initial={{ opacity: 0, y: 20, scale: 0.95 }}
-          animate={{ opacity: 1, y: 0, scale: 1 }}
+          className="hidden lg:block"
+          initial={{ opacity: 0, x: -50 }}
+          animate={{ opacity: 1, x: 0 }}
           transition={{ duration: 0.6 }}
-          className="z-10 w-full max-w-md"
         >
-          <div className="bg-card/95 backdrop-blur-xl rounded-2xl shadow-xl border border-border p-6 sm:p-8 md:p-10">
-            {/* Back Button */}
-            <div className="flex justify-end mb-4">
-              <button
-                onClick={onBack}
-                className="p-2 rounded-xl bg-secondary text-secondary-foreground hover:bg-muted transition-all duration-300 hover:scale-105"
-                aria-label="Back to home"
-              >
-                <ChevronLeft size={20} />
-              </button>
+          <div className="space-y-6">
+            <div className="flex items-center gap-3">
+              <div className="w-12 h-12 bg-gradient-to-br from-primary to-accent rounded-xl flex items-center justify-center">
+                <GraduationCap className="w-7 h-7 text-white" />
+              </div>
+              <h1 className="text-3xl font-black text-foreground">EduSmart</h1>
             </div>
 
-            {/* Title */}
-            <div className="text-center mb-8">
-              <h1 className="text-3xl sm:text-4xl font-black text-foreground mb-3">
-                Create Account
-              </h1>
-              <p className="text-muted-foreground text-base sm:text-lg">
-                Start your learning journey today
-              </p>
-            </div>
+            <h2 className="text-4xl font-black text-foreground leading-tight">
+              Join Our Smart Learning Platform
+            </h2>
 
-            {/* Form */}
-            <form onSubmit={handleSubmit} noValidate className="space-y-5">
-              <div>
-                <label className="block text-foreground font-semibold mb-2 text-sm sm:text-base">
-                  Full Name
-                </label>
-                <input
-                  type="text"
-                  name="name"
-                  className="w-full px-4 py-3 rounded-xl bg-background border border-border focus:ring-2 focus:ring-primary focus:border-primary transition outline-none text-foreground"
-                  placeholder="John Doe"
-                  required
-                  value={form.name}
-                  onChange={handleChange}
-                  autoComplete="name"
-                />
+            <p className="text-lg text-muted-foreground">
+              Create your account and start your learning journey with
+              AI-powered education.
+            </p>
+
+            <div className="space-y-4 pt-4">
+              <div className="flex items-start gap-3">
+                <div className="w-10 h-10 bg-primary/10 rounded-lg flex items-center justify-center flex-shrink-0">
+                  <BookOpen className="w-5 h-5 text-primary" />
+                </div>
+                <div>
+                  <h3 className="font-bold text-foreground">
+                    Interactive Learning
+                  </h3>
+                  <p className="text-sm text-muted-foreground">
+                    Engage with video lectures and quizzes
+                  </p>
+                </div>
               </div>
 
-              <div>
-                <label className="block text-foreground font-semibold mb-2 text-sm sm:text-base">
-                  Email Address
-                </label>
-                <input
-                  type="email"
-                  name="email"
-                  className="w-full px-4 py-3 rounded-xl bg-background border border-border focus:ring-2 focus:ring-primary focus:border-primary transition outline-none text-foreground"
-                  placeholder="you@example.com"
-                  required
-                  value={form.email}
-                  onChange={handleChange}
-                  autoComplete="email"
-                />
+              <div className="flex items-start gap-3">
+                <div className="w-10 h-10 bg-accent/10 rounded-lg flex items-center justify-center flex-shrink-0">
+                  <Shield className="w-5 h-5 text-accent" />
+                </div>
+                <div>
+                  <h3 className="font-bold text-foreground">
+                    AI-Powered Assistance
+                  </h3>
+                  <p className="text-sm text-muted-foreground">
+                    Get instant help with AI tutor
+                  </p>
+                </div>
               </div>
-
-              <div>
-                <label className="block text-foreground font-semibold mb-2 text-sm sm:text-base">
-                  Password
-                </label>
-                <input
-                  type="password"
-                  name="password"
-                  className="w-full px-4 py-3 rounded-xl bg-background border border-border focus:ring-2 focus:ring-primary focus:border-primary transition outline-none text-foreground"
-                  placeholder="••••••••"
-                  required
-                  value={form.password}
-                  onChange={handleChange}
-                  minLength={6}
-                  autoComplete="new-password"
-                />
-                <p className="text-xs text-muted-foreground mt-1">
-                  Must be at least 6 characters
-                </p>
-              </div>
-
-              <button
-                type="submit"
-                disabled={submitting}
-                className="w-full px-6 py-4 bg-accent text-accent-foreground rounded-xl font-bold text-base sm:text-lg shadow-accent-glow hover:shadow-lg transition-all duration-300 hover:scale-105 inline-flex items-center justify-center gap-3 disabled:opacity-50 disabled:cursor-not-allowed"
-              >
-                {submitting ? "Creating Account..." : "Create Account"}
-                {!submitting && <ArrowRight size={20} />}
-              </button>
-            </form>
-
-            {/* Login Link */}
-            <div className="mt-6 text-center">
-              <p className="text-muted-foreground text-sm sm:text-base">
-                Already have an account?{" "}
-                <button
-                  type="button"
-                  onClick={() => navigate("/login")}
-                  className="text-primary font-semibold hover:underline"
-                >
-                  Login
-                </button>
-              </p>
             </div>
           </div>
         </motion.div>
+
+        {/* Right Side - Sign Up Form */}
+        <motion.div
+          className="bg-card rounded-2xl p-8 border border-border shadow-xl"
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.6 }}
+        >
+          {/* Back Button */}
+          <button
+            onClick={onBack}
+            className="flex items-center gap-2 text-muted-foreground hover:text-foreground transition-colors mb-6"
+          >
+            <ChevronLeft className="w-5 h-5" />
+            <span className="text-sm font-semibold">Back</span>
+          </button>
+
+          <h2 className="text-2xl font-black text-foreground mb-6">
+            Create Account
+          </h2>
+
+          {/* Role Selection */}
+          <div className="grid grid-cols-2 gap-3 mb-6">
+            <button
+              type="button"
+              onClick={() => handleRoleSelect("student")}
+              className={`p-4 rounded-xl border-2 transition-all ${
+                formData.role === "student"
+                  ? "bg-primary/10 border-primary"
+                  : "bg-muted/50 border-transparent hover:border-primary/30"
+              }`}
+            >
+              <GraduationCap
+                className={`w-8 h-8 mx-auto mb-2 ${
+                  formData.role === "student"
+                    ? "text-primary"
+                    : "text-muted-foreground"
+                }`}
+              />
+              <p className="font-bold text-sm text-foreground">Student</p>
+            </button>
+
+            <button
+              type="button"
+              onClick={() => handleRoleSelect("faculty")}
+              className={`p-4 rounded-xl border-2 transition-all ${
+                formData.role === "faculty"
+                  ? "bg-accent/10 border-accent"
+                  : "bg-muted/50 border-transparent hover:border-accent/30"
+              }`}
+            >
+              <Shield
+                className={`w-8 h-8 mx-auto mb-2 ${
+                  formData.role === "faculty"
+                    ? "text-accent"
+                    : "text-muted-foreground"
+                }`}
+              />
+              <p className="font-bold text-sm text-foreground">Faculty</p>
+            </button>
+          </div>
+
+          <form onSubmit={handleSubmit} className="space-y-4">
+            {/* Full Name */}
+            <div>
+              <label className="block text-sm font-semibold text-foreground mb-2">
+                Full Name
+              </label>
+              <div className="relative">
+                <User className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground" />
+                <input
+                  type="text"
+                  name="name"
+                  value={formData.name}
+                  onChange={handleChange}
+                  placeholder="Enter your full name"
+                  className="w-full pl-11 pr-4 py-3 bg-muted rounded-xl border border-border text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary"
+                  required
+                />
+              </div>
+            </div>
+
+            {/* Email */}
+            <div>
+              <label className="block text-sm font-semibold text-foreground mb-2">
+                Email Address
+              </label>
+              <div className="relative">
+                <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground" />
+                <input
+                  type="email"
+                  name="email"
+                  value={formData.email}
+                  onChange={handleChange}
+                  placeholder="your.email@example.com"
+                  className="w-full pl-11 pr-4 py-3 bg-muted rounded-xl border border-border text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary"
+                  required
+                />
+              </div>
+            </div>
+
+            {/* Conditional Fields based on Role */}
+            {formData.role === "student" && (
+              <div>
+                <label className="block text-sm font-semibold text-foreground mb-2">
+                  Student ID
+                </label>
+                <input
+                  type="text"
+                  name="studentId"
+                  value={formData.studentId}
+                  onChange={handleChange}
+                  placeholder="e.g., STU2024001"
+                  className="w-full px-4 py-3 bg-muted rounded-xl border border-border text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary"
+                  required
+                />
+              </div>
+            )}
+
+            {formData.role === "faculty" && (
+              <div>
+                <label className="block text-sm font-semibold text-foreground mb-2">
+                  Department
+                </label>
+                <select
+                  name="department"
+                  value={formData.department}
+                  onChange={handleChange}
+                  className="w-full px-4 py-3 bg-muted rounded-xl border border-border text-foreground focus:outline-none focus:ring-2 focus:ring-primary"
+                  required
+                >
+                  <option value="">Select Department</option>
+                  <option value="ECE">Electronics and Communication</option>
+                  <option value="CSE">Computer Science</option>
+                  <option value="ME">Mechanical Engineering</option>
+                  <option value="EE">Electrical Engineering</option>
+                  <option value="CE">Civil Engineering</option>
+                </select>
+              </div>
+            )}
+
+            {/* Password */}
+            <div>
+              <label className="block text-sm font-semibold text-foreground mb-2">
+                Password
+              </label>
+              <div className="relative">
+                <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground" />
+                <input
+                  type={showPassword ? "text" : "password"}
+                  name="password"
+                  value={formData.password}
+                  onChange={handleChange}
+                  placeholder="Create a strong password"
+                  className="w-full pl-11 pr-11 py-3 bg-muted rounded-xl border border-border text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary"
+                  required
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowPassword(!showPassword)}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+                >
+                  {showPassword ? (
+                    <EyeOff className="w-5 h-5" />
+                  ) : (
+                    <Eye className="w-5 h-5" />
+                  )}
+                </button>
+              </div>
+            </div>
+
+            {/* Confirm Password */}
+            <div>
+              <label className="block text-sm font-semibold text-foreground mb-2">
+                Confirm Password
+              </label>
+              <div className="relative">
+                <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground" />
+                <input
+                  type={showConfirmPassword ? "text" : "password"}
+                  name="confirmPassword"
+                  value={formData.confirmPassword}
+                  onChange={handleChange}
+                  placeholder="Re-enter your password"
+                  className="w-full pl-11 pr-11 py-3 bg-muted rounded-xl border border-border text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary"
+                  required
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+                >
+                  {showConfirmPassword ? (
+                    <EyeOff className="w-5 h-5" />
+                  ) : (
+                    <Eye className="w-5 h-5" />
+                  )}
+                </button>
+              </div>
+            </div>
+
+            {/* Submit Button */}
+            <button
+              type="submit"
+              className="w-full px-6 py-3 bg-gradient-to-r from-primary to-accent text-white rounded-xl font-bold hover:opacity-90 transition-all shadow-lg flex items-center justify-center gap-2 mt-6"
+            >
+              Create {formData.role === "faculty" ? "Faculty" : "Student"}{" "}
+              Account
+              <ArrowRight className="w-5 h-5" />
+            </button>
+          </form>
+
+          {/* Login Link */}
+          <p className="text-center text-sm text-muted-foreground mt-6">
+            Already have an account?{" "}
+            <button
+              onClick={() => navigate("/login")}
+              className="text-primary font-bold hover:underline"
+            >
+              Login here
+            </button>
+          </p>
+        </motion.div>
       </div>
 
-      {/* Footer */}
-      <footer className="bg-card/98 border-t border-border py-6">
-        <div className="w-full max-w-7xl mx-auto px-4 sm:px-6 text-center">
-          <p className="text-muted-foreground text-sm">
-            &copy; {new Date().getFullYear()} EduSmart. All rights reserved.
-          </p>
-        </div>
-      </footer>
+      {/* OTP Modal */}
+      <OTPVerificationModal
+        isOpen={showOTPModal}
+        onClose={() => setShowOTPModal(false)}
+        email={formData.email}
+        onVerify={handleOTPVerify}
+      />
     </div>
   );
 };
