@@ -38,6 +38,7 @@ import CourseManagement from "./components/faculty/CourseManagement";
 import DoubtManagement from "./components/faculty/DoubtManagement";
 import FacultyAnalytics from "./components/faculty/FacultyAnalytics";
 import FacultySettings from "./components/faculty/FacultySettings";
+import FacultyProfile from "./components/faculty/FacultyProfile";
 
 export const DarkModeContext = createContext({
   darkMode: false,
@@ -255,8 +256,14 @@ function FacultyLayout({
           />
           <main className="flex-1 w-full">
             <Routes>
-              <Route index element={<FacultyDashboard />} />
-              <Route path="dashboard" element={<FacultyDashboard />} />
+              <Route
+                index
+                element={<FacultyDashboard setActiveTab={setActiveTab} />}
+              />
+              <Route
+                path="dashboard"
+                element={<FacultyDashboard setActiveTab={setActiveTab} />}
+              />
               <Route path="students" element={<StudentMonitoring />} />
               <Route
                 path="students/:studentId"
@@ -265,6 +272,7 @@ function FacultyLayout({
               <Route path="courses" element={<CourseManagement />} />
               <Route path="doubts" element={<DoubtManagement />} />
               <Route path="analytics" element={<FacultyAnalytics />} />
+              <Route path="profile" element={<FacultyProfile />} />
               <Route path="settings" element={<FacultySettings />} />
               <Route
                 path="*"
@@ -317,12 +325,10 @@ function AppRoutes({
   // Auth Handlers
   const handleLogin = (userObj) => {
     setUser(userObj);
-    // Navigation happens inside LoginPage after OTP verification
   };
 
   const handleSignUp = (userObj) => {
     setUser(userObj);
-    // Navigation happens inside SignUpPage after OTP verification
   };
 
   // Show loading spinner while checking auth state

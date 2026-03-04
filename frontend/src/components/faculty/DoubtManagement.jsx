@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   Search,
@@ -7,7 +7,6 @@ import {
   Send,
   Clock,
   CheckCircle2,
-  XCircle,
   AlertCircle,
   User,
   BookOpen,
@@ -16,118 +15,157 @@ import {
   Mail,
 } from "lucide-react";
 import { toast } from "react-hot-toast";
+import API from "../../api/axios";
 
 const DoubtManagement = () => {
   const [searchQuery, setSearchQuery] = useState("");
-  const [filterStatus, setFilterStatus] = useState("all"); // all, pending, resolved
-  const [filterPriority, setFilterPriority] = useState("all"); // all, high, medium, low
+  const [filterStatus, setFilterStatus] = useState("all");
+  const [filterPriority, setFilterPriority] = useState("all");
   const [selectedDoubt, setSelectedDoubt] = useState(null);
   const [showResponseModal, setShowResponseModal] = useState(false);
   const [response, setResponse] = useState("");
+  const [doubts, setDoubts] = useState([]);
+  const [students, setStudents] = useState([]);
+  const [courses, setCourses] = useState([]);
+  const [loading, setLoading] = useState(true);
 
-  // Mock doubts data
-  const doubts = [
-    {
-      id: 1,
-      student: {
-        name: "John Doe",
-        email: "john.doe@example.com",
-        studentId: "STU2024001",
-      },
-      course: "JavaScript Fundamentals",
-      lesson: "Closures & Scope",
-      question:
-        "How does closure work in JavaScript? Can you explain with an example?",
-      timestamp: "10 min ago",
-      status: "pending",
-      priority: "high",
-      videoTimestamp: "05:30",
-      responses: [],
-    },
-    {
-      id: 2,
-      student: {
-        name: "Jane Smith",
-        email: "jane.smith@example.com",
-        studentId: "STU2024002",
-      },
-      course: "React Development",
-      lesson: "React Hooks",
-      question:
-        "What is the difference between useState and useReducer? When should I use each?",
-      timestamp: "1 hour ago",
-      status: "pending",
-      priority: "medium",
-      videoTimestamp: "12:45",
-      responses: [],
-    },
-    {
-      id: 3,
-      student: {
-        name: "Mike Wilson",
-        email: "mike.wilson@example.com",
-        studentId: "STU2024003",
-      },
-      course: "Python Basics",
-      lesson: "List Comprehension",
-      question: "Can you explain list comprehension with multiple conditions?",
-      timestamp: "3 hours ago",
-      status: "resolved",
-      priority: "low",
-      videoTimestamp: "08:20",
-      responses: [
-        {
-          id: 1,
-          from: "Dr. John Smith",
-          message:
-            "List comprehension with multiple conditions works like this: [x for x in range(10) if x % 2 == 0 if x > 5]",
-          timestamp: "2 hours ago",
+  // Fetch data on component mount
+  useEffect(() => {
+    fetchData();
+  }, []);
+
+  const fetchData = async () => {
+    try {
+      setLoading(true);
+
+      // Fetch students and courses in parallel
+      const [studentsRes, coursesRes] = await Promise.all([
+        API.get("/users/students").catch(() => ({ data: [] })),
+        API.get("/courses/my-courses").catch(() => ({ data: [] })),
+      ]);
+
+      const fetchedStudents = studentsRes.data || [];
+      const fetchedCourses = coursesRes.data || [];
+
+      setStudents(fetchedStudents);
+      setCourses(fetchedCourses);
+
+      // Generate mock doubts from actual students
+      if (fetchedStudents.length > 0) {
+        const mockDoubts = generateMockDoubts(fetchedStudents, fetchedCourses);
+        setDoubts(mockDoubts);
+      } else {
+        setDoubts([]);
+      }
+    } catch (error) {
+      console.error("Error fetching data:", error);
+      toast.error("Failed to load data");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Generate mock doubts from real students and courses
+  const generateMockDoubts = (studentsList, coursesList) => {
+    const mockQuestions = [
+      "How does closure work in JavaScript? Can you explain with an example?",
+      "What is the difference between useState and useReducer? When should I use each?",
+      "Can you explain list comprehension with multiple conditions?",
+      "How do I handle errors in async/await? Is try-catch the only way?",
+      "Why is componentWillMount deprecated? What should I use instead?",
+      "What's the difference between null and undefined in JavaScript?",
+      "How does React's virtual DOM work internally?",
+      "Can you explain the concept of hoisting in JavaScript?",
+      "What are the differences between let, const, and var?",
+      "How do I optimize React component performance?",
+    ];
+
+    const mockLessons = [
+      "Closures & Scope",
+      "React Hooks",
+      "List Comprehension",
+      "Async/Await",
+      "Component Lifecycle",
+      "JavaScript Fundamentals",
+      "Advanced React",
+      "Python Basics",
+      "ES6 Features",
+      "Performance Optimization",
+    ];
+
+    const statuses = ["pending", "resolved"];
+    const priorities = ["high", "medium", "low"];
+    const timeStamps = [
+      "10 min ago",
+      "1 hour ago",
+      "3 hours ago",
+      "5 hours ago",
+      "1 day ago",
+      "2 days ago",
+    ];
+    const videoTimestamps = [
+      "05:30",
+      "12:45",
+      "08:20",
+      "15:10",
+      "10:00",
+      "18:30",
+    ];
+
+    // Generate doubts for each student (or up to 10 doubts)
+    const generatedDoubts = [];
+    const maxDoubts = Math.min(studentsList.length * 2, 10);
+
+    for (let i = 0; i < maxDoubts; i++) {
+      const student = studentsList[i % studentsList.length];
+      const course =
+        coursesList.length > 0
+          ? coursesList[i % coursesList.length]
+          : { title: "JavaScript Fundamentals" };
+
+      const status =
+        i < 3
+          ? "pending"
+          : statuses[Math.floor(Math.random() * statuses.length)];
+      const priority =
+        i < 2
+          ? "high"
+          : priorities[Math.floor(Math.random() * priorities.length)];
+
+      const doubt = {
+        id: i + 1,
+        student: {
+          name: student.name,
+          email: student.email,
+          studentId:
+            student.studentId || `STU${String(i + 1).padStart(7, "0")}`,
+          avatar: student.avatar,
         },
-      ],
-    },
-    {
-      id: 4,
-      student: {
-        name: "Sarah Connor",
-        email: "sarah.connor@example.com",
-        studentId: "STU2024004",
-      },
-      course: "JavaScript Fundamentals",
-      lesson: "Async/Await",
-      question:
-        "How do I handle errors in async/await? Is try-catch the only way?",
-      timestamp: "5 hours ago",
-      status: "resolved",
-      priority: "high",
-      videoTimestamp: "15:10",
-      responses: [
-        {
-          id: 1,
-          from: "Dr. John Smith",
-          message:
-            "You can use try-catch blocks or .catch() method. Both work well depending on your use case.",
-          timestamp: "4 hours ago",
-        },
-      ],
-    },
-    {
-      id: 5,
-      student: {
-        name: "Tom Hardy",
-        email: "tom.hardy@example.com",
-        studentId: "STU2024005",
-      },
-      course: "React Development",
-      lesson: "Component Lifecycle",
-      question:
-        "Why is componentWillMount deprecated? What should I use instead?",
-      timestamp: "1 day ago",
-      status: "pending",
-      priority: "medium",
-      videoTimestamp: "10:00",
-      responses: [],
-    },
-  ];
+        course: course.title,
+        lesson: mockLessons[i % mockLessons.length],
+        question: mockQuestions[i % mockQuestions.length],
+        timestamp: timeStamps[i % timeStamps.length],
+        status: status,
+        priority: priority,
+        videoTimestamp: videoTimestamps[i % videoTimestamps.length],
+        responses:
+          status === "resolved"
+            ? [
+                {
+                  id: 1,
+                  from: "Faculty",
+                  message: "Here's a detailed explanation of your query...",
+                  timestamp: "2 hours ago",
+                },
+              ]
+            : [],
+      };
+
+      generatedDoubts.push(doubt);
+    }
+
+    return generatedDoubts;
+  };
 
   // Filter doubts
   const filteredDoubts = doubts.filter((doubt) => {
@@ -180,7 +218,27 @@ const DoubtManagement = () => {
       return;
     }
 
-    // Mock send response (replace with API call)
+    // Update doubt status to resolved
+    setDoubts(
+      doubts.map((d) =>
+        d.id === selectedDoubt.id
+          ? {
+              ...d,
+              status: "resolved",
+              responses: [
+                ...d.responses,
+                {
+                  id: Date.now(),
+                  from: "Faculty",
+                  message: response,
+                  timestamp: "Just now",
+                },
+              ],
+            }
+          : d,
+      ),
+    );
+
     toast.success("Response sent successfully! ✅");
     setResponse("");
     setShowResponseModal(false);
@@ -188,7 +246,9 @@ const DoubtManagement = () => {
   };
 
   const handleMarkAsResolved = (doubtId) => {
-    // Mock mark as resolved (replace with API call)
+    setDoubts(
+      doubts.map((d) => (d.id === doubtId ? { ...d, status: "resolved" } : d)),
+    );
     toast.success("Marked as resolved! ✅");
   };
 
@@ -199,6 +259,17 @@ const DoubtManagement = () => {
   const highPriorityDoubts = doubts.filter(
     (d) => d.priority === "high" && d.status === "pending",
   ).length;
+
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-background flex items-center justify-center">
+        <div className="text-center">
+          <div className="w-16 h-16 border-4 border-primary border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
+          <p className="text-muted-foreground">Loading doubts...</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-background p-4 sm:p-6 lg:p-8">
@@ -350,25 +421,21 @@ const DoubtManagement = () => {
                 className="p-6 hover:bg-muted/50 transition-colors"
               >
                 <div className="flex items-start gap-4">
-                  {/* Priority Indicator */}
-                  <div
-                    className={`w-10 h-10 rounded-lg flex items-center justify-center flex-shrink-0 ${
-                      doubt.priority === "high"
-                        ? "bg-destructive/10"
-                        : doubt.priority === "medium"
-                          ? "bg-warning/10"
-                          : "bg-success/10"
-                    }`}
-                  >
-                    <MessageSquare
-                      className={`w-5 h-5 ${
-                        doubt.priority === "high"
-                          ? "text-destructive"
-                          : doubt.priority === "medium"
-                            ? "text-warning"
-                            : "text-success"
-                      }`}
-                    />
+                  {/* Student Avatar */}
+                  <div className="flex-shrink-0">
+                    {doubt.student.avatar ? (
+                      <img
+                        src={doubt.student.avatar}
+                        alt={doubt.student.name}
+                        className="w-12 h-12 rounded-full object-cover border-2 border-primary/30"
+                      />
+                    ) : (
+                      <div className="w-12 h-12 rounded-full bg-gradient-to-br from-primary to-accent flex items-center justify-center">
+                        <span className="text-lg font-bold text-white">
+                          {doubt.student.name.charAt(0)}
+                        </span>
+                      </div>
+                    )}
                   </div>
 
                   {/* Content */}
@@ -487,7 +554,9 @@ const DoubtManagement = () => {
                 No doubts found
               </h3>
               <p className="text-sm text-muted-foreground">
-                Try adjusting your search or filter criteria
+                {students.length === 0
+                  ? "No students enrolled yet"
+                  : "Try adjusting your search or filter criteria"}
               </p>
             </div>
           )}
@@ -506,22 +575,37 @@ const DoubtManagement = () => {
             >
               {/* Header */}
               <div className="flex items-start justify-between mb-6">
-                <div className="flex-1">
-                  <h3 className="text-2xl font-black text-foreground mb-2">
-                    Student Doubt
-                  </h3>
-                  <div className="flex items-center gap-2 flex-wrap">
-                    <span className="text-sm text-muted-foreground">
+                <div className="flex items-center gap-3 flex-1">
+                  {selectedDoubt.student.avatar ? (
+                    <img
+                      src={selectedDoubt.student.avatar}
+                      alt={selectedDoubt.student.name}
+                      className="w-12 h-12 rounded-full object-cover border-2 border-primary/30"
+                    />
+                  ) : (
+                    <div className="w-12 h-12 rounded-full bg-gradient-to-br from-primary to-accent flex items-center justify-center flex-shrink-0">
+                      <span className="text-lg font-bold text-white">
+                        {selectedDoubt.student.name.charAt(0)}
+                      </span>
+                    </div>
+                  )}
+                  <div className="flex-1">
+                    <h3 className="text-2xl font-black text-foreground mb-1">
                       {selectedDoubt.student.name}
-                    </span>
-                    <span className="text-muted-foreground">•</span>
-                    <span className="text-sm text-muted-foreground">
-                      {selectedDoubt.course}
-                    </span>
-                    <span className="text-muted-foreground">•</span>
-                    <span className="text-sm text-primary font-semibold">
-                      @ {selectedDoubt.videoTimestamp}
-                    </span>
+                    </h3>
+                    <div className="flex items-center gap-2 flex-wrap text-sm">
+                      <span className="text-muted-foreground">
+                        {selectedDoubt.student.email}
+                      </span>
+                      <span className="text-muted-foreground">•</span>
+                      <span className="text-muted-foreground">
+                        {selectedDoubt.course}
+                      </span>
+                      <span className="text-muted-foreground">•</span>
+                      <span className="text-primary font-semibold">
+                        @ {selectedDoubt.videoTimestamp}
+                      </span>
+                    </div>
                   </div>
                 </div>
                 <button

@@ -5,7 +5,9 @@
   "type": "module",
   "scripts": {
     "dev": "nodemon server.js",
-    "start": "node server.js"
+    "start": "node server.js",
+    "migrate": "node scripts/migrateUsers.js",
+    "create-faculty": "node scripts/createFaculty.js"
   },
   "dependencies": {
     "bcryptjs": "^2.4.3",

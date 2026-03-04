@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import {
   Users,
@@ -14,14 +14,38 @@ import {
   Brain,
   Trophy,
 } from "lucide-react";
+import { useNavigate } from "react-router-dom";
+import API from "../../api/axios";
+import { toast } from "react-hot-toast";
 
-const FacultyDashboard = () => {
-  // Mock data
+const FacultyDashboard = ({ setActiveTab }) => {
+  const navigate = useNavigate();
+  const [students, setStudents] = useState([]);
+  const [loading, setLoading] = useState(true);
+
+  // Fetch real students from API
+  useEffect(() => {
+    fetchStudents();
+  }, []);
+
+  const fetchStudents = async () => {
+    try {
+      const response = await API.get("/users/students");
+      setStudents(response.data || []);
+    } catch (error) {
+      console.error("Error fetching students:", error);
+      setStudents([]);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Mock data for stats (can be enhanced later with real data)
   const stats = [
     {
       id: 1,
       label: "Total Students",
-      value: "245",
+      value: students.length.toString(),
       change: "+12%",
       trend: "up",
       icon: Users,
@@ -48,7 +72,10 @@ const FacultyDashboard = () => {
     {
       id: 4,
       label: "Avg. Performance",
-      value: "78%",
+      value:
+        students.length > 0
+          ? `${Math.round(students.reduce((sum, s) => sum + (s.averageScore || 0), 0) / students.length)}%`
+          : "0%",
       change: "+3%",
       trend: "up",
       icon: TrendingUp,
@@ -56,45 +83,24 @@ const FacultyDashboard = () => {
     },
   ];
 
-  const recentStudents = [
-    {
-      id: 1,
-      name: "Alice Johnson",
-      course: "JavaScript Fundamentals",
-      progress: 85,
-      lastActive: "2 hours ago",
-      status: "active",
-    },
-    {
-      id: 2,
-      name: "Bob Smith",
-      course: "React Development",
-      progress: 62,
-      lastActive: "5 hours ago",
-      status: "active",
-    },
-    {
-      id: 3,
-      name: "Charlie Brown",
-      course: "Python Basics",
-      progress: 45,
-      lastActive: "1 day ago",
-      status: "inactive",
-    },
-    {
-      id: 4,
-      name: "Diana Prince",
-      course: "Data Structures",
-      progress: 92,
-      lastActive: "30 min ago",
-      status: "active",
-    },
-  ];
+  // Get recent students (last 4) with avatar
+  const recentStudents = students.slice(0, 4).map((student) => ({
+    id: student._id,
+    name: student.name,
+    avatar: student.avatar || null, // Add avatar field
+    course:
+      student.enrolledCourses?.length > 0
+        ? `${student.enrolledCourses.length} Course${student.enrolledCourses.length > 1 ? "s" : ""}`
+        : "No courses yet",
+    progress: student.progress || 0,
+    lastActive: student.lastActive || "Recently",
+    status: student.status || "active",
+  }));
 
   const recentDoubts = [
     {
       id: 1,
-      student: "John Doe",
+      student: students[0]?.name || "Student 1",
       course: "JavaScript",
       question: "How does closure work in JavaScript?",
       time: "10 min ago",
@@ -102,7 +108,7 @@ const FacultyDashboard = () => {
     },
     {
       id: 2,
-      student: "Jane Smith",
+      student: students[1]?.name || "Student 2",
       course: "React",
       question: "What is the difference between useState and useReducer?",
       time: "1 hour ago",
@@ -110,13 +116,55 @@ const FacultyDashboard = () => {
     },
     {
       id: 3,
-      student: "Mike Wilson",
+      student: students[2]?.name || "Student 3",
       course: "Python",
       question: "Explain list comprehension with examples",
       time: "3 hours ago",
       priority: "low",
     },
   ];
+
+  // Navigation handlers
+  const handleAddCourse = () => {
+    if (setActiveTab) setActiveTab("courses");
+    navigate("/faculty/courses");
+  };
+
+  const handleViewAnalytics = () => {
+    if (setActiveTab) setActiveTab("analytics");
+    navigate("/faculty/analytics");
+  };
+
+  const handleViewDoubts = () => {
+    if (setActiveTab) setActiveTab("doubts");
+    navigate("/faculty/doubts");
+  };
+
+  const handleViewAllStudents = () => {
+    if (setActiveTab) setActiveTab("students");
+    navigate("/faculty/students");
+  };
+
+  const handleViewAllDoubts = () => {
+    if (setActiveTab) setActiveTab("doubts");
+    navigate("/faculty/doubts");
+  };
+
+  const handleRespondToDoubt = (doubtId) => {
+    if (setActiveTab) setActiveTab("doubts");
+    navigate(`/faculty/doubts?id=${doubtId}`);
+  };
+
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-background flex items-center justify-center">
+        <div className="text-center">
+          <div className="w-16 h-16 border-4 border-primary border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
+          <p className="text-muted-foreground">Loading dashboard...</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-background p-4 sm:p-6 lg:p-8">
@@ -183,49 +231,76 @@ const FacultyDashboard = () => {
               <h2 className="text-xl font-black text-foreground">
                 Recent Students
               </h2>
-              <button className="text-sm text-primary font-bold hover:underline flex items-center gap-1">
+              <button
+                onClick={handleViewAllStudents}
+                className="text-sm text-primary font-bold hover:underline flex items-center gap-1"
+              >
                 View All
                 <ArrowRight className="w-4 h-4" />
               </button>
             </div>
 
             <div className="space-y-4">
-              {recentStudents.map((student) => (
-                <div
-                  key={student.id}
-                  className="flex items-center gap-4 p-4 rounded-xl bg-muted/50 hover:bg-muted transition-colors cursor-pointer"
-                >
-                  <div className="w-12 h-12 bg-gradient-to-br from-primary to-accent rounded-full flex items-center justify-center">
-                    <span className="text-lg font-bold text-white">
-                      {student.name.charAt(0)}
-                    </span>
-                  </div>
-                  <div className="flex-1">
-                    <h3 className="font-bold text-foreground">
-                      {student.name}
-                    </h3>
-                    <p className="text-sm text-muted-foreground">
-                      {student.course}
-                    </p>
-                  </div>
-                  <div className="text-right">
-                    <div className="flex items-center gap-2 mb-1">
-                      <div className="w-20 h-2 bg-muted rounded-full overflow-hidden">
-                        <div
-                          className="h-full bg-gradient-to-r from-primary to-accent"
-                          style={{ width: `${student.progress}%` }}
-                        />
-                      </div>
-                      <span className="text-sm font-bold text-foreground">
-                        {student.progress}%
+              {recentStudents.length > 0 ? (
+                recentStudents.map((student) => (
+                  <div
+                    key={student.id}
+                    className="flex items-center gap-4 p-4 rounded-xl bg-muted/50 hover:bg-muted transition-colors cursor-pointer"
+                    onClick={handleViewAllStudents}
+                  >
+                    {/* Student Avatar - FIXED */}
+                    {student.avatar ? (
+                      <img
+                        src={student.avatar}
+                        alt={student.name}
+                        className="w-12 h-12 rounded-full object-cover border-2 border-primary/30"
+                        onError={(e) => {
+                          // Fallback if image fails to load
+                          e.target.style.display = "none";
+                          e.target.nextSibling.style.display = "flex";
+                        }}
+                      />
+                    ) : null}
+                    <div
+                      className="w-12 h-12 bg-gradient-to-br from-primary to-accent rounded-full flex items-center justify-center"
+                      style={{ display: student.avatar ? "none" : "flex" }}
+                    >
+                      <span className="text-lg font-bold text-white">
+                        {student.name.charAt(0)}
                       </span>
                     </div>
-                    <p className="text-xs text-muted-foreground">
-                      {student.lastActive}
-                    </p>
+
+                    <div className="flex-1">
+                      <h3 className="font-bold text-foreground">
+                        {student.name}
+                      </h3>
+                      <p className="text-sm text-muted-foreground">
+                        {student.course}
+                      </p>
+                    </div>
+                    <div className="text-right">
+                      <div className="flex items-center gap-2 mb-1">
+                        <div className="w-20 h-2 bg-muted rounded-full overflow-hidden">
+                          <div
+                            className="h-full bg-gradient-to-r from-primary to-accent"
+                            style={{ width: `${student.progress}%` }}
+                          />
+                        </div>
+                        <span className="text-sm font-bold text-foreground">
+                          {student.progress}%
+                        </span>
+                      </div>
+                      <p className="text-xs text-muted-foreground">
+                        {student.lastActive}
+                      </p>
+                    </div>
                   </div>
+                ))
+              ) : (
+                <div className="text-center py-8 text-muted-foreground">
+                  <p>No students enrolled yet</p>
                 </div>
-              ))}
+              )}
             </div>
           </motion.div>
 
@@ -240,15 +315,24 @@ const FacultyDashboard = () => {
               Quick Actions
             </h2>
             <div className="space-y-3">
-              <button className="w-full px-4 py-3 bg-primary text-primary-foreground rounded-xl font-bold hover:bg-primary/90 transition-all flex items-center justify-between">
+              <button
+                onClick={handleAddCourse}
+                className="w-full px-4 py-3 bg-primary text-primary-foreground rounded-xl font-bold hover:bg-primary/90 transition-all flex items-center justify-between"
+              >
                 <span>Add New Course</span>
                 <BookOpen className="w-5 h-5" />
               </button>
-              <button className="w-full px-4 py-3 bg-accent text-white rounded-xl font-bold hover:bg-accent/90 transition-all flex items-center justify-between">
+              <button
+                onClick={handleViewAnalytics}
+                className="w-full px-4 py-3 bg-accent text-white rounded-xl font-bold hover:bg-accent/90 transition-all flex items-center justify-between"
+              >
                 <span>View Analytics</span>
                 <TrendingUp className="w-5 h-5" />
               </button>
-              <button className="w-full px-4 py-3 bg-warning text-white rounded-xl font-bold hover:bg-warning/90 transition-all flex items-center justify-between">
+              <button
+                onClick={handleViewDoubts}
+                className="w-full px-4 py-3 bg-warning text-white rounded-xl font-bold hover:bg-warning/90 transition-all flex items-center justify-between"
+              >
                 <span>Pending Doubts</span>
                 <MessageSquare className="w-5 h-5" />
               </button>
@@ -267,7 +351,10 @@ const FacultyDashboard = () => {
             <h2 className="text-xl font-black text-foreground">
               Recent Doubts
             </h2>
-            <button className="text-sm text-primary font-bold hover:underline flex items-center gap-1">
+            <button
+              onClick={handleViewAllDoubts}
+              className="text-sm text-primary font-bold hover:underline flex items-center gap-1"
+            >
               View All
               <ArrowRight className="w-4 h-4" />
             </button>
@@ -312,7 +399,10 @@ const FacultyDashboard = () => {
                   </p>
                   <p className="text-xs text-muted-foreground">{doubt.time}</p>
                 </div>
-                <button className="px-4 py-2 bg-primary text-primary-foreground rounded-lg text-sm font-bold hover:bg-primary/90 transition-all">
+                <button
+                  onClick={() => handleRespondToDoubt(doubt.id)}
+                  className="px-4 py-2 bg-primary text-primary-foreground rounded-lg text-sm font-bold hover:bg-primary/90 transition-all"
+                >
                   Respond
                 </button>
               </div>

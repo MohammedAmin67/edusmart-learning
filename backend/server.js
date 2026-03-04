@@ -7,6 +7,8 @@ import { fileURLToPath } from "url";
 import { connectDB } from "./lib/db.js";
 import authRoutes from "./routes/auth.js";
 import userRoutes from "./routes/users.js";
+import courseRoutes from "./routes/courses.js";
+import doubtRoutes from "./routes/doubts.js";
 import "dotenv/config";
 
 if (!process.env.JWT_SECRET) {
@@ -32,6 +34,8 @@ const PORT = process.env.PORT || 5002;
 
 app.use("/api/auth", authRoutes);
 app.use("/api/users", userRoutes);
+app.use("/api/courses", courseRoutes);
+app.use("/api/doubts", doubtRoutes);
 
 // ===== REMOVED: Serving frontend static files for Render deployment =====
 // const __filename = fileURLToPath(import.meta.url);

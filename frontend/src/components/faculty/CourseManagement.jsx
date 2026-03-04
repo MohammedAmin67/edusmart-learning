@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   Plus,
@@ -10,115 +10,48 @@ import {
   BookOpen,
   Clock,
   Award,
-  Eye,
-  MoreVertical,
-  Upload,
   X,
   Save,
   Video,
-  FileText,
   CheckCircle2,
 } from "lucide-react";
 import { toast } from "react-hot-toast";
+import courseService from "../../services/courseService";
 
 const CourseManagement = () => {
   const [searchQuery, setSearchQuery] = useState("");
-  const [filterStatus, setFilterStatus] = useState("all"); // all, active, draft
+  const [filterStatus, setFilterStatus] = useState("all");
   const [showAddCourseModal, setShowAddCourseModal] = useState(false);
   const [showEditModal, setShowEditModal] = useState(false);
   const [selectedCourse, setSelectedCourse] = useState(null);
+  const [courses, setCourses] = useState([]);
+  const [loading, setLoading] = useState(true);
   const [newCourse, setNewCourse] = useState({
     title: "",
     description: "",
     category: "",
     duration: "",
-    level: "beginner",
+    difficulty: "Beginner",
     thumbnail: null,
   });
 
-  // Mock courses data
-  const courses = [
-    {
-      id: 1,
-      title: "JavaScript Fundamentals",
-      description: "Learn the basics of JavaScript programming",
-      category: "Programming",
-      level: "Beginner",
-      duration: "8 weeks",
-      lessons: 20,
-      quizzes: 5,
-      enrolledStudents: 145,
-      completionRate: 78,
-      averageScore: 82,
-      status: "active",
-      createdAt: "2024-01-15",
-      thumbnail: null,
-    },
-    {
-      id: 2,
-      title: "React Development",
-      description: "Master React.js for modern web applications",
-      category: "Web Development",
-      level: "Intermediate",
-      duration: "10 weeks",
-      lessons: 25,
-      quizzes: 6,
-      enrolledStudents: 98,
-      completionRate: 65,
-      averageScore: 79,
-      status: "active",
-      createdAt: "2024-01-20",
-      thumbnail: null,
-    },
-    {
-      id: 3,
-      title: "Python Basics",
-      description: "Introduction to Python programming",
-      category: "Programming",
-      level: "Beginner",
-      duration: "6 weeks",
-      lessons: 15,
-      quizzes: 4,
-      enrolledStudents: 210,
-      completionRate: 85,
-      averageScore: 88,
-      status: "active",
-      createdAt: "2024-02-01",
-      thumbnail: null,
-    },
-    {
-      id: 4,
-      title: "Data Structures & Algorithms",
-      description: "Advanced DSA concepts and problem solving",
-      category: "Computer Science",
-      level: "Advanced",
-      duration: "12 weeks",
-      lessons: 30,
-      quizzes: 8,
-      enrolledStudents: 67,
-      completionRate: 45,
-      averageScore: 72,
-      status: "active",
-      createdAt: "2024-02-10",
-      thumbnail: null,
-    },
-    {
-      id: 5,
-      title: "Machine Learning Basics",
-      description: "Introduction to ML concepts and applications",
-      category: "AI/ML",
-      level: "Intermediate",
-      duration: "0 weeks",
-      lessons: 0,
-      quizzes: 0,
-      enrolledStudents: 0,
-      completionRate: 0,
-      averageScore: 0,
-      status: "draft",
-      createdAt: "2024-03-01",
-      thumbnail: null,
-    },
-  ];
+  // Fetch courses on mount
+  useEffect(() => {
+    fetchCourses();
+  }, []);
+
+  const fetchCourses = async () => {
+    try {
+      setLoading(true);
+      const data = await courseService.getMyCourses();
+      setCourses(data);
+    } catch (error) {
+      console.error("Error fetching courses:", error);
+      toast.error("Failed to load courses");
+    } finally {
+      setLoading(false);
+    }
+  };
 
   // Filter courses
   const filteredCourses = courses.filter((course) => {
@@ -128,28 +61,47 @@ const CourseManagement = () => {
       course.category.toLowerCase().includes(searchQuery.toLowerCase());
 
     const matchesStatus =
-      filterStatus === "all" || course.status === filterStatus;
+      filterStatus === "all" ||
+      (filterStatus === "active" && course.isPublished) ||
+      (filterStatus === "draft" && !course.isPublished);
 
     return matchesSearch && matchesStatus;
   });
 
-  const handleAddCourse = () => {
+  const handleAddCourse = async () => {
     if (!newCourse.title || !newCourse.description || !newCourse.category) {
       toast.error("Please fill in all required fields");
       return;
     }
 
-    // Mock add course (replace with API call)
-    toast.success("Course created successfully! 🎉");
-    setShowAddCourseModal(false);
-    setNewCourse({
-      title: "",
-      description: "",
-      category: "",
-      duration: "",
-      level: "beginner",
-      thumbnail: null,
-    });
+    try {
+      const courseData = {
+        title: newCourse.title,
+        description: newCourse.description,
+        category: newCourse.category,
+        difficulty: newCourse.difficulty,
+        duration: newCourse.duration || "Self-paced",
+      };
+
+      await courseService.createCourse(courseData);
+      toast.success("Course created successfully! 🎉");
+
+      setShowAddCourseModal(false);
+      setNewCourse({
+        title: "",
+        description: "",
+        category: "",
+        duration: "",
+        difficulty: "Beginner",
+        thumbnail: null,
+      });
+
+      // Refresh courses list
+      fetchCourses();
+    } catch (error) {
+      console.error("Error creating course:", error);
+      toast.error(error.msg || "Failed to create course");
+    }
   };
 
   const handleEditCourse = (course) => {
@@ -157,18 +109,43 @@ const CourseManagement = () => {
     setShowEditModal(true);
   };
 
-  const handleDeleteCourse = (courseId) => {
+  const handleDeleteCourse = async (courseId) => {
     if (window.confirm("Are you sure you want to delete this course?")) {
-      // Mock delete (replace with API call)
-      toast.success("Course deleted successfully!");
+      try {
+        await courseService.deleteCourse(courseId);
+        toast.success("Course deleted successfully!");
+        fetchCourses();
+      } catch (error) {
+        console.error("Error deleting course:", error);
+        toast.error(error.msg || "Failed to delete course");
+      }
     }
   };
 
-  const handleSaveEdit = () => {
-    // Mock save (replace with API call)
-    toast.success("Course updated successfully! ✅");
-    setShowEditModal(false);
-    setSelectedCourse(null);
+  const handleSaveEdit = async () => {
+    if (!selectedCourse) return;
+
+    try {
+      const updates = {
+        title: selectedCourse.title,
+        description: selectedCourse.description,
+        category: selectedCourse.category,
+        difficulty: selectedCourse.difficulty,
+        duration: selectedCourse.duration,
+      };
+
+      await courseService.updateCourse(selectedCourse._id, updates);
+      toast.success("Course updated successfully! ✅");
+
+      setShowEditModal(false);
+      setSelectedCourse(null);
+
+      // Refresh courses list
+      fetchCourses();
+    } catch (error) {
+      console.error("Error updating course:", error);
+      toast.error(error.msg || "Failed to update course");
+    }
   };
 
   const getLevelColor = (level) => {
@@ -183,6 +160,17 @@ const CourseManagement = () => {
         return "bg-muted text-muted-foreground border-border";
     }
   };
+
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-background flex items-center justify-center">
+        <div className="text-center">
+          <div className="w-16 h-16 border-4 border-primary border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
+          <p className="text-muted-foreground">Loading courses...</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-background p-4 sm:p-6 lg:p-8">
@@ -241,7 +229,7 @@ const CourseManagement = () => {
               </div>
             </div>
             <h3 className="text-3xl font-black text-foreground mb-1">
-              {courses.filter((c) => c.status === "active").length}
+              {courses.filter((c) => c.isPublished).length}
             </h3>
             <p className="text-sm text-muted-foreground">Active Courses</p>
           </motion.div>
@@ -258,7 +246,10 @@ const CourseManagement = () => {
               </div>
             </div>
             <h3 className="text-3xl font-black text-foreground mb-1">
-              {courses.reduce((sum, c) => sum + c.enrolledStudents, 0)}
+              {courses.reduce(
+                (sum, c) => sum + (c.enrolledStudents?.length || 0),
+                0,
+              )}
             </h3>
             <p className="text-sm text-muted-foreground">Total Enrollments</p>
           </motion.div>
@@ -275,13 +266,9 @@ const CourseManagement = () => {
               </div>
             </div>
             <h3 className="text-3xl font-black text-foreground mb-1">
-              {Math.round(
-                courses.reduce((sum, c) => sum + c.averageScore, 0) /
-                  courses.filter((c) => c.status === "active").length,
-              )}
-              %
+              {courses.reduce((sum, c) => sum + (c.lessons?.length || 0), 0)}
             </h3>
-            <p className="text-sm text-muted-foreground">Avg. Score</p>
+            <p className="text-sm text-muted-foreground">Total Lessons</p>
           </motion.div>
         </div>
 
@@ -325,7 +312,7 @@ const CourseManagement = () => {
         <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
           {filteredCourses.map((course, index) => (
             <motion.div
-              key={course.id}
+              key={course._id}
               className="bg-card rounded-2xl border border-border shadow-lg overflow-hidden hover:shadow-xl transition-all"
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
@@ -333,16 +320,24 @@ const CourseManagement = () => {
             >
               {/* Thumbnail */}
               <div className="h-40 bg-gradient-to-br from-primary to-accent flex items-center justify-center relative">
-                <Video className="w-12 h-12 text-white opacity-50" />
+                {course.thumbnail ? (
+                  <img
+                    src={course.thumbnail}
+                    alt={course.title}
+                    className="w-full h-full object-cover"
+                  />
+                ) : (
+                  <Video className="w-12 h-12 text-white opacity-50" />
+                )}
                 <div className="absolute top-3 right-3">
                   <div
                     className={`px-3 py-1 rounded-lg text-xs font-bold ${
-                      course.status === "active"
+                      course.isPublished
                         ? "bg-success text-white"
                         : "bg-warning text-white"
                     }`}
                   >
-                    {course.status === "active" ? "Active" : "Draft"}
+                    {course.isPublished ? "Active" : "Draft"}
                   </div>
                 </div>
               </div>
@@ -366,10 +361,10 @@ const CourseManagement = () => {
                   </div>
                   <div
                     className={`px-2 py-1 rounded text-xs font-bold border ${getLevelColor(
-                      course.level,
+                      course.difficulty,
                     )}`}
                   >
-                    {course.level}
+                    {course.difficulty}
                   </div>
                 </div>
 
@@ -378,13 +373,13 @@ const CourseManagement = () => {
                   <div className="flex items-center gap-2">
                     <Users className="w-4 h-4 text-muted-foreground" />
                     <span className="text-foreground font-semibold">
-                      {course.enrolledStudents}
+                      {course.enrolledStudents?.length || 0}
                     </span>
                   </div>
                   <div className="flex items-center gap-2">
                     <BookOpen className="w-4 h-4 text-muted-foreground" />
                     <span className="text-foreground font-semibold">
-                      {course.lessons} lessons
+                      {course.lessons?.length || 0} lessons
                     </span>
                   </div>
                   <div className="flex items-center gap-2">
@@ -396,28 +391,10 @@ const CourseManagement = () => {
                   <div className="flex items-center gap-2">
                     <Award className="w-4 h-4 text-muted-foreground" />
                     <span className="text-foreground font-semibold">
-                      {course.averageScore}% avg
+                      {course.quizzes?.length || 0} quizzes
                     </span>
                   </div>
                 </div>
-
-                {/* Progress Bar */}
-                {course.status === "active" && (
-                  <div className="mb-4">
-                    <div className="flex items-center justify-between text-xs text-muted-foreground mb-1">
-                      <span>Completion Rate</span>
-                      <span className="font-bold">
-                        {course.completionRate}%
-                      </span>
-                    </div>
-                    <div className="h-2 bg-muted rounded-full overflow-hidden">
-                      <div
-                        className="h-full bg-gradient-to-r from-success to-accent"
-                        style={{ width: `${course.completionRate}%` }}
-                      />
-                    </div>
-                  </div>
-                )}
 
                 {/* Actions */}
                 <div className="flex gap-2">
@@ -429,7 +406,7 @@ const CourseManagement = () => {
                     Edit
                   </button>
                   <button
-                    onClick={() => handleDeleteCourse(course.id)}
+                    onClick={() => handleDeleteCourse(course._id)}
                     className="px-4 py-2 bg-destructive/10 text-destructive rounded-lg text-sm font-bold hover:bg-destructive/20 transition-all flex items-center justify-center"
                   >
                     <Trash2 className="w-4 h-4" />
@@ -527,13 +504,17 @@ const CourseManagement = () => {
                       className="w-full px-4 py-3 bg-muted rounded-xl border border-border text-foreground focus:outline-none focus:ring-2 focus:ring-primary"
                     >
                       <option value="">Select Category</option>
-                      <option value="Programming">Programming</option>
                       <option value="Web Development">Web Development</option>
-                      <option value="Data Science">Data Science</option>
-                      <option value="AI/ML">AI/ML</option>
                       <option value="Mobile Development">
                         Mobile Development
                       </option>
+                      <option value="Data Science">Data Science</option>
+                      <option value="AI & ML">AI & ML</option>
+                      <option value="Cybersecurity">Cybersecurity</option>
+                      <option value="Cloud Computing">Cloud Computing</option>
+                      <option value="DevOps">DevOps</option>
+                      <option value="Game Development">Game Development</option>
+                      <option value="Other">Other</option>
                     </select>
                   </div>
 
@@ -542,15 +523,18 @@ const CourseManagement = () => {
                       Level
                     </label>
                     <select
-                      value={newCourse.level}
+                      value={newCourse.difficulty}
                       onChange={(e) =>
-                        setNewCourse({ ...newCourse, level: e.target.value })
+                        setNewCourse({
+                          ...newCourse,
+                          difficulty: e.target.value,
+                        })
                       }
                       className="w-full px-4 py-3 bg-muted rounded-xl border border-border text-foreground focus:outline-none focus:ring-2 focus:ring-primary"
                     >
-                      <option value="beginner">Beginner</option>
-                      <option value="intermediate">Intermediate</option>
-                      <option value="advanced">Advanced</option>
+                      <option value="Beginner">Beginner</option>
+                      <option value="Intermediate">Intermediate</option>
+                      <option value="Advanced">Advanced</option>
                     </select>
                   </div>
                 </div>
@@ -569,22 +553,6 @@ const CourseManagement = () => {
                     placeholder="e.g., 8 weeks"
                     className="w-full px-4 py-3 bg-muted rounded-xl border border-border text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary"
                   />
-                </div>
-
-                {/* Thumbnail Upload */}
-                <div>
-                  <label className="block text-sm font-semibold text-foreground mb-2">
-                    Course Thumbnail
-                  </label>
-                  <div className="border-2 border-dashed border-border rounded-xl p-8 text-center hover:border-primary transition-colors cursor-pointer">
-                    <Upload className="w-8 h-8 text-muted-foreground mx-auto mb-2" />
-                    <p className="text-sm text-muted-foreground">
-                      Click to upload or drag and drop
-                    </p>
-                    <p className="text-xs text-muted-foreground mt-1">
-                      PNG, JPG up to 5MB
-                    </p>
-                  </div>
                 </div>
 
                 {/* Actions */}
@@ -632,14 +600,19 @@ const CourseManagement = () => {
               </div>
 
               <div className="space-y-4">
-                {/* Similar form fields as Add Course Modal */}
                 <div>
                   <label className="block text-sm font-semibold text-foreground mb-2">
                     Course Title
                   </label>
                   <input
                     type="text"
-                    defaultValue={selectedCourse.title}
+                    value={selectedCourse.title}
+                    onChange={(e) =>
+                      setSelectedCourse({
+                        ...selectedCourse,
+                        title: e.target.value,
+                      })
+                    }
                     className="w-full px-4 py-3 bg-muted rounded-xl border border-border text-foreground focus:outline-none focus:ring-2 focus:ring-primary"
                   />
                 </div>
@@ -649,8 +622,81 @@ const CourseManagement = () => {
                     Description
                   </label>
                   <textarea
-                    defaultValue={selectedCourse.description}
+                    value={selectedCourse.description}
+                    onChange={(e) =>
+                      setSelectedCourse({
+                        ...selectedCourse,
+                        description: e.target.value,
+                      })
+                    }
                     className="w-full h-24 px-4 py-3 bg-muted rounded-xl border border-border text-foreground focus:outline-none focus:ring-2 focus:ring-primary resize-none"
+                  />
+                </div>
+
+                <div className="grid sm:grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-sm font-semibold text-foreground mb-2">
+                      Category
+                    </label>
+                    <select
+                      value={selectedCourse.category}
+                      onChange={(e) =>
+                        setSelectedCourse({
+                          ...selectedCourse,
+                          category: e.target.value,
+                        })
+                      }
+                      className="w-full px-4 py-3 bg-muted rounded-xl border border-border text-foreground focus:outline-none focus:ring-2 focus:ring-primary"
+                    >
+                      <option value="Web Development">Web Development</option>
+                      <option value="Mobile Development">
+                        Mobile Development
+                      </option>
+                      <option value="Data Science">Data Science</option>
+                      <option value="AI & ML">AI & ML</option>
+                      <option value="Cybersecurity">Cybersecurity</option>
+                      <option value="Cloud Computing">Cloud Computing</option>
+                      <option value="DevOps">DevOps</option>
+                      <option value="Game Development">Game Development</option>
+                      <option value="Other">Other</option>
+                    </select>
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-semibold text-foreground mb-2">
+                      Level
+                    </label>
+                    <select
+                      value={selectedCourse.difficulty}
+                      onChange={(e) =>
+                        setSelectedCourse({
+                          ...selectedCourse,
+                          difficulty: e.target.value,
+                        })
+                      }
+                      className="w-full px-4 py-3 bg-muted rounded-xl border border-border text-foreground focus:outline-none focus:ring-2 focus:ring-primary"
+                    >
+                      <option value="Beginner">Beginner</option>
+                      <option value="Intermediate">Intermediate</option>
+                      <option value="Advanced">Advanced</option>
+                    </select>
+                  </div>
+                </div>
+
+                <div>
+                  <label className="block text-sm font-semibold text-foreground mb-2">
+                    Duration
+                  </label>
+                  <input
+                    type="text"
+                    value={selectedCourse.duration}
+                    onChange={(e) =>
+                      setSelectedCourse({
+                        ...selectedCourse,
+                        duration: e.target.value,
+                      })
+                    }
+                    className="w-full px-4 py-3 bg-muted rounded-xl border border-border text-foreground focus:outline-none focus:ring-2 focus:ring-primary"
                   />
                 </div>
 

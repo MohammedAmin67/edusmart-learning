@@ -318,7 +318,7 @@ const SignUpPage = ({ onSignUp, onBack }) => {
                   value={formData.department}
                   onChange={handleChange}
                   disabled={isLoading}
-                  className="w-full px-4 py-3 bg-muted rounded-xl border border-border text-foreground focus:outline-none focus:ring-2 focus:ring-primary disabled:opacity-50"
+                  className="w-full px-3 py-3 cursor-pointer bg-muted rounded-xl border border-border text-foreground focus:outline-none focus:ring-2 focus:ring-primary disabled:opacity-50"
                   required
                 >
                   <option value="">Select Department</option>

@@ -78,7 +78,7 @@ const Header = ({ onMenuToggle, setActiveTab, setSelectedCourseId }) => {
       localStorage.removeItem(`lastLogin_${user?.email}`);
     }
 
-    toast.success("Logged out successfully! 👋");
+    toast.success("Logged out successfully!");
     navigate("/");
   };
 

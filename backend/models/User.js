@@ -22,7 +22,7 @@ const userSchema = new mongoose.Schema(
     role: {
       type: String,
       enum: ["student", "faculty"],
-      default: "student",
+      default: "student", // Default all users to student
       required: true,
     },
     department: {
@@ -36,6 +36,65 @@ const userSchema = new mongoose.Schema(
     avatar: {
       type: String,
       default: "",
+    },
+    // Additional student fields
+    phone: {
+      type: String,
+      default: "",
+    },
+    semester: {
+      type: String,
+      default: "",
+    },
+    enrolledCourses: {
+      type: [mongoose.Schema.Types.ObjectId],
+      ref: "Course",
+      default: [],
+    },
+    completedCourses: {
+      type: [mongoose.Schema.Types.ObjectId],
+      ref: "Course",
+      default: [],
+    },
+    progress: {
+      type: Number,
+      default: 0,
+      min: 0,
+      max: 100,
+    },
+    averageScore: {
+      type: Number,
+      default: 0,
+      min: 0,
+      max: 100,
+    },
+    totalQuizzes: {
+      type: Number,
+      default: 0,
+    },
+    completedQuizzes: {
+      type: Number,
+      default: 0,
+    },
+    lastActive: {
+      type: String,
+      default: "Recently",
+    },
+    status: {
+      type: String,
+      enum: ["active", "inactive", "at-risk"],
+      default: "active",
+    },
+    trend: {
+      type: String,
+      enum: ["up", "down", "stable"],
+      default: "stable",
+    },
+    attentionScore: {
+      type: Number,
+      default: 0,
+      min: 0,
+      max: 100,
     },
   },
   { timestamps: true },

@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import {
   Search,
@@ -10,138 +10,92 @@ import {
   Clock,
   CheckCircle2,
   XCircle,
-  MoreVertical,
   Mail,
   Phone,
   BookOpen,
   Target,
   Award,
+  User,
+  MessageSquare,
+  FileText,
 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
+import { toast } from "react-hot-toast";
+import API from "../../api/axios";
 
 const StudentMonitoring = () => {
   const navigate = useNavigate();
   const [searchQuery, setSearchQuery] = useState("");
-  const [filterStatus, setFilterStatus] = useState("all"); // all, active, inactive, at-risk
-  const [sortBy, setSortBy] = useState("name"); // name, progress, lastActive
+  const [filterStatus, setFilterStatus] = useState("all");
+  const [sortBy, setSortBy] = useState("name");
+  const [students, setStudents] = useState([]);
+  const [loading, setLoading] = useState(true);
 
-  // Mock student data
-  const students = [
-    {
-      id: 1,
-      name: "Alice Johnson",
-      email: "alice.johnson@example.com",
-      studentId: "STU2024001",
-      enrolledCourses: 3,
-      completedCourses: 1,
-      averageProgress: 85,
-      averageScore: 88,
-      totalQuizzes: 12,
-      completedQuizzes: 10,
-      lastActive: "2 hours ago",
-      status: "active",
-      trend: "up",
-      attentionScore: 92,
-    },
-    {
-      id: 2,
-      name: "Bob Smith",
-      email: "bob.smith@example.com",
-      studentId: "STU2024002",
-      enrolledCourses: 4,
-      completedCourses: 2,
-      averageProgress: 62,
-      averageScore: 65,
-      totalQuizzes: 15,
-      completedQuizzes: 9,
-      lastActive: "5 hours ago",
-      status: "active",
-      trend: "stable",
-      attentionScore: 75,
-    },
-    {
-      id: 3,
-      name: "Charlie Brown",
-      email: "charlie.brown@example.com",
-      studentId: "STU2024003",
-      enrolledCourses: 2,
-      completedCourses: 0,
-      averageProgress: 35,
-      averageScore: 42,
-      totalQuizzes: 8,
-      completedQuizzes: 3,
-      lastActive: "2 days ago",
-      status: "at-risk",
-      trend: "down",
-      attentionScore: 48,
-    },
-    {
-      id: 4,
-      name: "Diana Prince",
-      email: "diana.prince@example.com",
-      studentId: "STU2024004",
-      enrolledCourses: 5,
-      completedCourses: 3,
-      averageProgress: 92,
-      averageScore: 95,
-      totalQuizzes: 20,
-      completedQuizzes: 19,
-      lastActive: "30 min ago",
-      status: "active",
-      trend: "up",
-      attentionScore: 98,
-    },
-    {
-      id: 5,
-      name: "Ethan Hunt",
-      email: "ethan.hunt@example.com",
-      studentId: "STU2024005",
-      enrolledCourses: 3,
-      completedCourses: 1,
-      averageProgress: 58,
-      averageScore: 61,
-      totalQuizzes: 12,
-      completedQuizzes: 7,
-      lastActive: "1 day ago",
-      status: "inactive",
-      trend: "down",
-      attentionScore: 55,
-    },
-    {
-      id: 6,
-      name: "Fiona Clark",
-      email: "fiona.clark@example.com",
-      studentId: "STU2024006",
-      enrolledCourses: 2,
-      completedCourses: 2,
-      averageProgress: 100,
-      averageScore: 97,
-      totalQuizzes: 10,
-      completedQuizzes: 10,
-      lastActive: "1 hour ago",
-      status: "active",
-      trend: "up",
-      attentionScore: 96,
-    },
-  ];
+  // Fetch students from API
+  useEffect(() => {
+    fetchStudents();
+  }, []);
+
+  const fetchStudents = async () => {
+    try {
+      setLoading(true);
+      // Fetch all users with role 'student'
+      const response = await API.get("/users/students");
+
+      // If endpoint doesn't exist, fetch all users and filter
+      if (!response.data) {
+        throw new Error("No data received");
+      }
+
+      // Map API data to component format
+      const studentsData = response.data.map((student) => ({
+        id: student._id,
+        name: student.name,
+        email: student.email,
+        phone: student.phone || "N/A",
+        studentId:
+          student.studentId || `STU${student._id.slice(-6).toUpperCase()}`,
+        department: student.department || "Computer Science",
+        semester: student.semester || "N/A",
+        enrolledCourses: student.enrolledCourses?.length || 0,
+        completedCourses: student.completedCourses?.length || 0,
+        averageProgress: student.progress || 0,
+        averageScore: student.averageScore || 0,
+        totalQuizzes: student.totalQuizzes || 0,
+        completedQuizzes: student.completedQuizzes || 0,
+        lastActive: student.lastActive || "Unknown",
+        status: student.status || "active",
+        trend: student.trend || "stable",
+        attentionScore: student.attentionScore || 0,
+        enrolledDate: student.createdAt || new Date().toISOString(),
+        avatar: student.avatar || null,
+      }));
+
+      setStudents(studentsData);
+    } catch (error) {
+      console.error("Error fetching students:", error);
+
+      // Don't show error toast, just use empty array
+      setStudents([]);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   // Filter students
   const filteredStudents = students
     .filter((student) => {
-      // Filter by search query
       const matchesSearch =
         student.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
         student.email.toLowerCase().includes(searchQuery.toLowerCase()) ||
         student.studentId.toLowerCase().includes(searchQuery.toLowerCase());
 
-      // Filter by status
       const matchesStatus =
         filterStatus === "all" || student.status === filterStatus;
 
       return matchesSearch && matchesStatus;
     })
     .sort((a, b) => {
-      // Sort by selected criteria
       if (sortBy === "name") {
         return a.name.localeCompare(b.name);
       } else if (sortBy === "progress") {
@@ -182,28 +136,52 @@ const StudentMonitoring = () => {
     navigate(`/faculty/students/${studentId}`);
   };
 
-  const handleExportData = () => {
-    // Mock export functionality
-    const csvContent = [
-      ["Name", "Email", "Student ID", "Progress", "Score", "Status"].join(","),
-      ...filteredStudents.map((s) =>
-        [
-          s.name,
-          s.email,
-          s.studentId,
-          `${s.averageProgress}%`,
-          `${s.averageScore}%`,
-          s.status,
-        ].join(","),
-      ),
-    ].join("\n");
+  const handleSendEmail = (student) => {
+    window.location.href = `mailto:${student.email}`;
+  };
 
-    const blob = new Blob([csvContent], { type: "text/csv" });
-    const url = window.URL.createObjectURL(blob);
-    const a = document.createElement("a");
-    a.href = url;
-    a.download = `students_report_${new Date().toISOString().split("T")[0]}.csv`;
-    a.click();
+  const handleSendMessage = (student) => {
+    toast.success(`Opening message to ${student.name}`);
+    navigate(`/faculty/doubts?student=${student.id}`);
+  };
+
+  const handleExportData = () => {
+    try {
+      const csvContent = [
+        [
+          "Name",
+          "Email",
+          "Student ID",
+          "Department",
+          "Progress",
+          "Score",
+          "Status",
+          "Last Active",
+        ].join(","),
+        ...filteredStudents.map((s) =>
+          [
+            s.name,
+            s.email,
+            s.studentId,
+            s.department,
+            `${s.averageProgress}%`,
+            `${s.averageScore}%`,
+            s.status,
+            s.lastActive,
+          ].join(","),
+        ),
+      ].join("\n");
+
+      const blob = new Blob([csvContent], { type: "text/csv" });
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `students_report_${new Date().toISOString().split("T")[0]}.csv`;
+      a.click();
+      toast.success("Report exported successfully! 📊");
+    } catch (error) {
+      toast.error("Failed to export report");
+    }
   };
 
   // Summary stats
@@ -211,7 +189,21 @@ const StudentMonitoring = () => {
   const activeStudents = students.filter((s) => s.status === "active").length;
   const atRiskStudents = students.filter((s) => s.status === "at-risk").length;
   const averageProgress =
-    students.reduce((sum, s) => sum + s.averageProgress, 0) / students.length;
+    students.length > 0
+      ? students.reduce((sum, s) => sum + s.averageProgress, 0) /
+        students.length
+      : 0;
+
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-background flex items-center justify-center">
+        <div className="text-center">
+          <div className="w-16 h-16 border-4 border-primary border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
+          <p className="text-muted-foreground">Loading students...</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-background p-4 sm:p-6 lg:p-8">
@@ -307,7 +299,7 @@ const StudentMonitoring = () => {
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.5 }}
         >
-          <div className="flex flex-col sm:flex-row gap-4">
+          <div className="flex flex-col lg:flex-row gap-4">
             {/* Search */}
             <div className="flex-1 relative">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground" />
@@ -326,7 +318,7 @@ const StudentMonitoring = () => {
               <select
                 value={filterStatus}
                 onChange={(e) => setFilterStatus(e.target.value)}
-                className="pl-11 pr-8 py-3 bg-muted rounded-xl border border-border text-foreground focus:outline-none focus:ring-2 focus:ring-primary appearance-none cursor-pointer"
+                className="pl-11 pr-8 py-3 bg-muted rounded-xl border border-border text-foreground focus:outline-none focus:ring-2 focus:ring-primary appearance-none cursor-pointer min-w-[150px]"
               >
                 <option value="all">All Status</option>
                 <option value="active">Active</option>
@@ -340,7 +332,7 @@ const StudentMonitoring = () => {
               <select
                 value={sortBy}
                 onChange={(e) => setSortBy(e.target.value)}
-                className="px-4 py-3 bg-muted rounded-xl border border-border text-foreground focus:outline-none focus:ring-2 focus:ring-primary appearance-none cursor-pointer"
+                className="px-4 py-3 bg-muted rounded-xl border border-border text-foreground focus:outline-none focus:ring-2 focus:ring-primary appearance-none cursor-pointer min-w-[150px]"
               >
                 <option value="name">Sort by Name</option>
                 <option value="progress">Sort by Progress</option>
@@ -348,182 +340,196 @@ const StudentMonitoring = () => {
               </select>
             </div>
 
-            {/* Export Button */}
-            <button
-              onClick={handleExportData}
-              className="px-6 py-3 bg-primary text-primary-foreground rounded-xl font-bold hover:bg-primary/90 transition-all flex items-center gap-2"
-            >
-              <Download className="w-5 h-5" />
-              Export
-            </button>
+            {/* Export Buttons */}
+            <div className="flex gap-2">
+              <button
+                onClick={handleExportData}
+                className="px-4 py-3 bg-primary text-primary-foreground rounded-xl font-bold hover:bg-primary/90 transition-all flex items-center gap-2"
+                title="Export CSV"
+              >
+                <Download className="w-5 h-5" />
+                <span className="hidden sm:inline">CSV</span>
+              </button>
+            </div>
           </div>
         </motion.div>
 
-        {/* Students Table */}
-        <motion.div
-          className="bg-card rounded-2xl border border-border shadow-lg overflow-hidden"
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.6 }}
-        >
-          <div className="overflow-x-auto">
-            <table className="w-full">
-              <thead className="bg-muted/50 border-b border-border">
-                <tr>
-                  <th className="px-6 py-4 text-left text-xs font-bold text-muted-foreground uppercase tracking-wider">
-                    Student
-                  </th>
-                  <th className="px-6 py-4 text-left text-xs font-bold text-muted-foreground uppercase tracking-wider">
-                    Student ID
-                  </th>
-                  <th className="px-6 py-4 text-left text-xs font-bold text-muted-foreground uppercase tracking-wider">
-                    Courses
-                  </th>
-                  <th className="px-6 py-4 text-left text-xs font-bold text-muted-foreground uppercase tracking-wider">
-                    Progress
-                  </th>
-                  <th className="px-6 py-4 text-left text-xs font-bold text-muted-foreground uppercase tracking-wider">
-                    Score
-                  </th>
-                  <th className="px-6 py-4 text-left text-xs font-bold text-muted-foreground uppercase tracking-wider">
-                    Attention
-                  </th>
-                  <th className="px-6 py-4 text-left text-xs font-bold text-muted-foreground uppercase tracking-wider">
-                    Status
-                  </th>
-                  <th className="px-6 py-4 text-left text-xs font-bold text-muted-foreground uppercase tracking-wider">
-                    Actions
-                  </th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-border">
-                {filteredStudents.map((student) => (
-                  <tr
-                    key={student.id}
-                    className="hover:bg-muted/50 transition-colors"
-                  >
-                    {/* Student Info */}
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <div className="flex items-center gap-3">
-                        <div className="w-10 h-10 bg-gradient-to-br from-primary to-accent rounded-full flex items-center justify-center">
-                          <span className="text-sm font-bold text-white">
-                            {student.name.charAt(0)}
-                          </span>
-                        </div>
-                        <div>
-                          <p className="text-sm font-bold text-foreground">
-                            {student.name}
-                          </p>
-                          <p className="text-xs text-muted-foreground">
-                            {student.email}
-                          </p>
-                        </div>
+        {/* Students Grid View */}
+        {filteredStudents.length > 0 ? (
+          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {filteredStudents.map((student, index) => (
+              <motion.div
+                key={student.id}
+                className="bg-card rounded-2xl border border-border shadow-lg overflow-hidden hover:shadow-xl transition-all"
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.6 + index * 0.05 }}
+              >
+                {/* Student Header */}
+                <div className="bg-gradient-to-r from-primary to-accent p-6 relative">
+                  <div className="absolute top-4 right-4">
+                    <div
+                      className={`px-3 py-1 rounded-lg border text-xs font-bold ${getStatusColor(
+                        student.status,
+                      )}`}
+                    >
+                      {getStatusLabel(student.status)}
+                    </div>
+                  </div>
+                  <div className="flex items-start gap-4">
+                    {student.avatar ? (
+                      <img
+                        src={student.avatar}
+                        alt={student.name}
+                        className="w-16 h-16 rounded-xl object-cover border-2 border-white shadow-lg"
+                      />
+                    ) : (
+                      <div className="w-16 h-16 rounded-xl bg-white/20 backdrop-blur-sm flex items-center justify-center border-2 border-white shadow-lg">
+                        <span className="text-2xl font-black text-white">
+                          {student.name.charAt(0)}
+                        </span>
                       </div>
-                    </td>
-
-                    {/* Student ID */}
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <p className="text-sm font-semibold text-foreground">
+                    )}
+                    <div className="flex-1 min-w-0">
+                      <h3 className="text-lg font-black text-white mb-1 truncate">
+                        {student.name}
+                      </h3>
+                      <p className="text-xs text-white/80 mb-1">
                         {student.studentId}
                       </p>
-                    </td>
+                      <p className="text-xs text-white/60">
+                        {student.department}
+                      </p>
+                    </div>
+                  </div>
+                </div>
 
-                    {/* Courses */}
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <div className="flex items-center gap-2">
-                        <BookOpen className="w-4 h-4 text-muted-foreground" />
-                        <span className="text-sm text-foreground">
-                          {student.completedCourses}/{student.enrolledCourses}
+                {/* Student Content */}
+                <div className="p-6">
+                  {/* Contact Info */}
+                  <div className="space-y-2 mb-4">
+                    <div className="flex items-center gap-2 text-sm">
+                      <Mail className="w-4 h-4 text-muted-foreground flex-shrink-0" />
+                      <span className="text-foreground truncate">
+                        {student.email}
+                      </span>
+                    </div>
+                    <div className="flex items-center gap-2 text-sm">
+                      <Phone className="w-4 h-4 text-muted-foreground flex-shrink-0" />
+                      <span className="text-foreground">{student.phone}</span>
+                    </div>
+                    <div className="flex items-center gap-2 text-sm">
+                      <Clock className="w-4 h-4 text-muted-foreground flex-shrink-0" />
+                      <span className="text-muted-foreground">
+                        Active {student.lastActive}
+                      </span>
+                    </div>
+                  </div>
+
+                  {/* Progress Bar */}
+                  <div className="mb-4">
+                    <div className="flex items-center justify-between mb-2">
+                      <span className="text-xs font-semibold text-muted-foreground">
+                        Overall Progress
+                      </span>
+                      <span className="text-xs font-bold text-foreground">
+                        {student.averageProgress}%
+                      </span>
+                    </div>
+                    <div className="h-2 bg-muted rounded-full overflow-hidden">
+                      <div
+                        className="h-full bg-gradient-to-r from-primary to-accent"
+                        style={{ width: `${student.averageProgress}%` }}
+                      />
+                    </div>
+                  </div>
+
+                  {/* Stats Grid */}
+                  <div className="grid grid-cols-2 gap-3 mb-4">
+                    <div className="bg-muted/50 rounded-lg p-3">
+                      <div className="flex items-center gap-2 mb-1">
+                        <BookOpen className="w-4 h-4 text-primary" />
+                        <span className="text-xs text-muted-foreground">
+                          Courses
                         </span>
                       </div>
-                    </td>
+                      <p className="text-lg font-black text-foreground">
+                        {student.completedCourses}/{student.enrolledCourses}
+                      </p>
+                    </div>
 
-                    {/* Progress */}
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <div className="flex items-center gap-2">
-                        <div className="w-24 h-2 bg-muted rounded-full overflow-hidden">
-                          <div
-                            className="h-full bg-gradient-to-r from-primary to-accent"
-                            style={{ width: `${student.averageProgress}%` }}
-                          />
-                        </div>
-                        <span className="text-sm font-bold text-foreground">
-                          {student.averageProgress}%
+                    <div className="bg-muted/50 rounded-lg p-3">
+                      <div className="flex items-center gap-2 mb-1">
+                        <Award className="w-4 h-4 text-accent" />
+                        <span className="text-xs text-muted-foreground">
+                          Score
                         </span>
                       </div>
-                    </td>
-
-                    {/* Score */}
-                    <td className="px-6 py-4 whitespace-nowrap">
                       <div className="flex items-center gap-1">
                         {student.trend === "up" ? (
                           <TrendingUp className="w-4 h-4 text-success" />
                         ) : student.trend === "down" ? (
                           <TrendingDown className="w-4 h-4 text-destructive" />
                         ) : null}
-                        <span className="text-sm font-bold text-foreground">
+                        <p className="text-lg font-black text-foreground">
                           {student.averageScore}%
-                        </span>
+                        </p>
                       </div>
-                    </td>
+                    </div>
+                  </div>
 
-                    {/* Attention Score */}
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <div
-                        className={`inline-flex items-center px-3 py-1 rounded-lg text-xs font-bold ${
-                          student.attentionScore >= 80
-                            ? "bg-success/10 text-success"
-                            : student.attentionScore >= 60
-                              ? "bg-warning/10 text-warning"
-                              : "bg-destructive/10 text-destructive"
-                        }`}
-                      >
-                        {student.attentionScore}%
-                      </div>
-                    </td>
-
-                    {/* Status */}
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <div
-                        className={`inline-flex items-center px-3 py-1 rounded-lg border text-xs font-bold ${getStatusColor(
-                          student.status,
-                        )}`}
-                      >
-                        {getStatusLabel(student.status)}
-                      </div>
-                    </td>
-
-                    {/* Actions */}
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <button
-                        onClick={() => handleViewDetails(student.id)}
-                        className="px-4 py-2 bg-primary text-primary-foreground rounded-lg text-xs font-bold hover:bg-primary/90 transition-all flex items-center gap-2"
-                      >
-                        <Eye className="w-4 h-4" />
-                        View
-                      </button>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
+                  {/* Actions */}
+                  <div className="flex gap-2">
+                    <button
+                      onClick={() => handleViewDetails(student.id)}
+                      className="flex-1 px-4 py-2 bg-primary text-primary-foreground rounded-lg text-sm font-bold hover:bg-primary/90 transition-all flex items-center justify-center gap-2"
+                    >
+                      <Eye className="w-4 h-4" />
+                      View Details
+                    </button>
+                    <button
+                      onClick={() => handleSendEmail(student)}
+                      className="px-4 py-2 bg-accent/10 text-accent rounded-lg text-sm font-bold hover:bg-accent/20 transition-all"
+                      title="Send Email"
+                    >
+                      <Mail className="w-4 h-4" />
+                    </button>
+                    <button
+                      onClick={() => handleSendMessage(student)}
+                      className="px-4 py-2 bg-success/10 text-success rounded-lg text-sm font-bold hover:bg-success/20 transition-all"
+                      title="Send Message"
+                    >
+                      <MessageSquare className="w-4 h-4" />
+                    </button>
+                  </div>
+                </div>
+              </motion.div>
+            ))}
           </div>
-
-          {/* Empty State */}
-          {filteredStudents.length === 0 && (
-            <div className="py-12 text-center">
-              <div className="w-16 h-16 bg-muted rounded-full flex items-center justify-center mx-auto mb-4">
-                <Search className="w-8 h-8 text-muted-foreground" />
-              </div>
-              <h3 className="text-lg font-bold text-foreground mb-2">
-                No students found
-              </h3>
-              <p className="text-sm text-muted-foreground">
-                Try adjusting your search or filter criteria
-              </p>
+        ) : (
+          <motion.div
+            className="text-center py-12 bg-card rounded-2xl border border-border"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+          >
+            <div className="w-16 h-16 bg-muted rounded-full flex items-center justify-center mx-auto mb-4">
+              <User className="w-8 h-8 text-muted-foreground" />
             </div>
-          )}
-        </motion.div>
+            <h3 className="text-lg font-bold text-foreground mb-2">
+              No students found
+            </h3>
+            <p className="text-sm text-muted-foreground mb-4">
+              {searchQuery
+                ? "Try adjusting your search criteria"
+                : "No students have enrolled yet"}
+            </p>
+            {!searchQuery && students.length === 0 && (
+              <p className="text-xs text-muted-foreground">
+                Students will appear here once they sign up
+              </p>
+            )}
+          </motion.div>
+        )}
       </div>
     </div>
   );
