@@ -39,6 +39,7 @@ import DoubtManagement from "./components/faculty/DoubtManagement";
 import FacultyAnalytics from "./components/faculty/FacultyAnalytics";
 import FacultySettings from "./components/faculty/FacultySettings";
 import FacultyProfile from "./components/faculty/FacultyProfile";
+import FacultyNotifications from "./components/faculty/facultyNotifications";
 
 export const DarkModeContext = createContext({
   darkMode: false,
@@ -274,6 +275,7 @@ function FacultyLayout({
               <Route path="analytics" element={<FacultyAnalytics />} />
               <Route path="profile" element={<FacultyProfile />} />
               <Route path="settings" element={<FacultySettings />} />
+              <Route path="notifications" element={<FacultyNotifications />} />
               <Route
                 path="*"
                 element={<Navigate to="/faculty/dashboard" replace />}
