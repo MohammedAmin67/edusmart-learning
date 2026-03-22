@@ -21,8 +21,6 @@ EduSmart includes **Synapse**, a built-in AI assistant that helps users:
 - **Preset questions are free** (don’t count)
 - Low-limit warning example: shown when **3 prompts left**
 
-> Note: Gemini also has its own API rate limits/quota depending on whether you are using free tier or billing.
-
 ---
 
 ## 🌟 Key Highlights
