@@ -330,7 +330,7 @@ const FacultyHeader = ({ onMenuToggle, setActiveTab }) => {
                         <button
                           onClick={() => {
                             setShowNotifications(false);
-                            setActiveTab("notifications");
+                            setActiveTab?.("notifications");
                             navigate("/faculty/notifications");
                           }}
                           className="text-xs text-primary font-bold hover:underline w-full text-center"

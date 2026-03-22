@@ -10,6 +10,7 @@ import userRoutes from "./routes/users.js";
 import courseRoutes from "./routes/courses.js";
 import doubtRoutes from "./routes/doubts.js";
 import notificationRoutes from "./routes/notifications.js";
+import synapseRoutes from "./routes/synapse.js";
 import "dotenv/config";
 
 if (!process.env.JWT_SECRET) {
@@ -38,6 +39,7 @@ app.use("/api/users", userRoutes);
 app.use("/api/courses", courseRoutes);
 app.use("/api/doubts", doubtRoutes);
 app.use("/api/notifications", notificationRoutes);
+app.use("/api/synapse", synapseRoutes);
 
 // ===== frontend static files for Render deployment =====
 // const __filename = fileURLToPath(import.meta.url);

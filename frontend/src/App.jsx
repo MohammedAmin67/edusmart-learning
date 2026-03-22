@@ -39,7 +39,8 @@ import DoubtManagement from "./components/faculty/DoubtManagement";
 import FacultyAnalytics from "./components/faculty/FacultyAnalytics";
 import FacultySettings from "./components/faculty/FacultySettings";
 import FacultyProfile from "./components/faculty/FacultyProfile";
-import FacultyNotifications from "./components/faculty/facultyNotifications";
+import FacultyNotifications from "./components/faculty/FacultyNotifications_TMP";
+import SynapseWidget from "./components/synapse/SynapseWidget";
 
 export const DarkModeContext = createContext({
   darkMode: false,
@@ -423,6 +424,13 @@ function AppRoutes({
   );
 }
 
+function SynapseGate() {
+  const { user, loading } = useUser();
+  if (loading) return null;
+  if (!user) return null; // only show when logged in
+  return <SynapseWidget />;
+}
+
 function App() {
   const [activeTab, setActiveTab] = useState("dashboard");
   const [sidebarOpen, setSidebarOpen] = useState(false);
@@ -518,6 +526,7 @@ function App() {
           selectedCourseId={selectedCourseId}
           setSelectedCourseId={setSelectedCourseId}
         />
+        <SynapseGate />
       </UserProvider>
     </DarkModeContext.Provider>
   );
